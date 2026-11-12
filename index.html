@@ -1,0 +1,1606 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl" x-data="app()" x-init="init()" :class="lang === 'fa' ? 'font-fa' : (lang === 'ar' ? 'font-ar' : 'font-en')">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>امور پژوهشی فراز | Faraz Research</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.0.0/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        .font-fa { font-family: 'Vazirmatn', sans-serif; }
+        .font-ar { font-family: 'Amiri', serif; font-size: 1.15em; line-height: 1.8; }
+        .font-en { font-family: 'Times New Roman', Times, serif; }
+        [x-cloak] { display: none !important; }
+        .hero-bg { background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); }
+        .service-card { transition: all 0.3s ease; }
+        .service-card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
+        .glass { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .admin-input { @apply w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none; }
+        .admin-label { @apply block text-sm font-bold mb-1 text-gray-700; }
+    </style>
+    
+    <script>
+        // Iran Provinces & Cities Data
+        const iranLocations = {
+            "تهران": ["تهران", "شهریار", "اسلامشهر", "ورامین", "دماوند", "رباط کریم", "پاکدشت"],
+            "اصفهان": ["اصفهان", "کاشان", "خمینی‌شهر", "نجف‌آباد", "شهرضا", "شاهین‌شهر"],
+            "خراسان رضوی": ["مشهد", "نیشابور", "سبزوار", "تربت حیدریه", "قوچان", "کاشمر"],
+            "فارس": ["شیراز", "مرودشت", "کازرون", "جهرم", "فسا", "لار"],
+            "آذربایجان شرقی": ["تبریز", "مراغه", "مرند", "میانه", "اهر", "بناب"],
+            "خوزستان": ["اهواز", "آبادان", "خرمشهر", "دزفول", "اندیمشک", "بهبهان"],
+            "البرز": ["کرج", "فردیس", "نظرآباد", "هشتگرد", "اشتهارد", "محمدشهر"],
+            "گیلان": ["رشت", "بندر انزلی", "لاهیجان", "آستارا", "تالش", "صومعه‌سرا"],
+            "مازندران": ["ساری", "بابل", "آمل", "قائم‌شهر", "نوشهر", "چالوس", "تنکابن"],
+            "قم": ["قم"],
+            "یزد": ["یزد", "میبد", "اردکان", "بافق", "مهریز"],
+            "کرمان": ["کرمان", "سیرجان", "رفسنجان", "جیرفت", "بم"],
+            "سیستان و بلوچستان": ["زاهدان", "زابل", "چابهار", "ایرانشهر"],
+            "کرمانشاه": ["کرمانشاه", "اسلام‌آباد غرب", "هرسین", "سنقر"],
+            "گلستان": ["گرگان", "گنبد کاووس", "علی‌آباد", "بندر ترکمن"],
+            "هرمزگان": ["بندرعباس", "قشم", "میناب", "بندر لنگه"],
+            "همدان": ["همدان", "ملایر", "نهاوند", "تویسرکان"],
+            "کردستان": ["سنندج", "سقز", "مریوان", "بانه"],
+            "لرستان": ["خرم‌آباد", "بروجرد", "دورود", "الیگودرز"],
+            "آذربایجان غربی": ["ارومیه", "خوی", "میاندوآب", "بوکان", "مهاباد"],
+            "مرکزی": ["اراک", "ساوه", "خمین", "محلات"],
+            "اردبیل": ["اردبیل", "پارس‌آباد", "مشکین‌شهر", "خلخال"],
+            "زنجان": ["زنجان", "ابهر", "خرمدره", "قیدار"],
+            "قزوین": ["قزوین", "تاکستان", "آبیک", "بوئین‌زهرا"],
+            "بوشهر": ["بوشهر", "برازجان", "گناوه", "کنگان"],
+            "چهارمحال و بختیاری": ["شهرکرد", "بروجن", "فارسان", "سامان"],
+            "سمنان": ["سمنان", "شاهرود", "گرمسار", "دامغان"],
+            "خراسان شمالی": ["بجنورد", "شیروان", "اسفراین", "آشخانه"],
+            "خراسان جنوبی": ["بیرجند", "قائن", "فردوس", "نهبندان"],
+            "ایلام": ["ایلام", "دهلران", "آبدانان", "ایوان"]
+        };
+
+        const defaultContent = {
+            fa: {
+                general: { logo: 'https://via.placeholder.com/40x40/1e3a8a/ffffff?text=FR', siteTitle: 'امور پژوهشی فراز' },
+                nav: { home: 'صفحه اصلی', about: 'درباره ما', contact: 'ارتباط با ما', faq: 'سوالات متداول', login: 'ورود / ثبت نام', dashboard: 'پنل کاربری', logout: 'خروج', getStarted: 'شروع کنید' },
+                hero: { title: 'امور پژوهشی فراز', subtitle: 'از پروپوزال تا دفاع', desc: 'انجام امورات دانشجویی از جمله مقالات، پایان نامه، پروپوزال، تحلیل آماری، مشاوره پژوهشی، ویرایش و ویراستاری، اصلاح متون، ترجمه تخصصی متون، استخراج مقاله از پایان نامه (کارشناسی ارشد و دکترا)، مشاوره انتخاب موضوع و تدوین عنوان، سمینار، پاورپوینت دفاع، تالیف و دیگر امورات ثبتی در سایت دانشگاه‌ها.', image: null, bgImage: null },
+                servicesSection: { title: 'خدمات ما', search: 'جستجوی محصولات...', guarantee: 'ضمانت همکاری تا پایان دفاع', support: 'پشتیبانی ۲۴ ساعته', payment: 'پرداخت کارت به کارت', orderBtn: 'برای ثبت درخواست کلیک کنید.' },
+                services: [
+                    { title: "پایان نامه (کارشناسی ارشد و دکترا)", icon: "fa-file-alt", image: null, fields: ['mobile', 'major', 'university', 'title', 'description', 'file'], customFields: [] },
+                    { title: "پروپوزال نویسی و طرح تحقیق", icon: "fa-file-alt", image: null, fields: ['mobile', 'major', 'university', 'title', 'description', 'file'], customFields: [] },
+                    { title: "مقاله نویسی (فارسی و انگلیسی)", icon: "fa-file-alt", image: null, fields: ['mobile', 'major', 'university', 'title', 'description', 'file'], customFields: [] },
+                    { title: "تحلیل آماری با نرم‌افزارهای تخصصی", icon: "fa-chart-bar", image: null, fields: ['mobile', 'major', 'university', 'title', 'population', 'description', 'file'], customFields: [] },
+                    { title: "مشاوره پژوهشی و نگارش علمی", icon: "fa-comments", image: null, fields: ['mobile', 'major', 'university', 'title', 'description', 'file'], customFields: [] },
+                    { title: "ویراستاری و اصلاح متن", icon: "fa-edit", image: null, fields: ['mobile', 'major', 'university', 'description', 'file'], customFields: [] },
+                    { title: "ترجمه تخصصی متون", icon: "fa-language", image: null, fields: ['mobile', 'major', 'university', 'description', 'file'], customFields: [] },
+                    { title: "طراحی پرسشنامه دیجیتال", icon: "fa-clipboard-list", image: null, fields: ['mobile', 'major', 'university', 'title', 'description', 'file'], customFields: [] },
+                    { title: "استخراج مقاله از پایان نامه", icon: "fa-file-export", image: null, fields: ['mobile', 'major', 'university', 'title', 'description', 'file'], customFields: [] },
+                    { title: "تهیه پاورپوینت دفاع", icon: "fa-file-powerpoint", image: null, fields: ['mobile', 'major', 'university', 'title', 'description', 'file'], customFields: [] },
+                    { title: "مشاوره انتخاب موضوع و تدوین عنوان", icon: "fa-lightbulb", image: null, fields: ['mobile', 'major', 'university', 'title', 'description', 'file'], customFields: [] },
+                    { title: "امورات ثبتی سامانه دانشگاه‌ها", icon: "fa-university", image: null, fields: ['mobile', 'major', 'university', 'description', 'file'], customFields: [] },
+                    { title: "طراحی لوگو، پوستر و بنر", icon: "fa-palette", image: null, fields: ['mobile', 'description', 'file'], customFields: [] },
+                    { title: "ارسال پیامک تبلیغاتی", icon: "fa-sms", image: null, fields: ['mobile', 'description', 'file'], customFields: [] },
+                    { title: "تایپ و نگارش انواع متون", icon: "fa-keyboard", image: null, fields: ['mobile', 'major', 'university', 'description', 'file'], customFields: [] },
+                    { title: "تبدیل صوت به متن", icon: "fa-microphone", image: null, fields: ['mobile', 'description', 'file'], customFields: [] },
+                    { title: "ثبت نام ایران اینترنتی خودرو", icon: "fa-car", image: null, fields: ['mobile', 'description', 'file'], customFields: [] }
+                ],
+                orderForm: { mobile: 'شماره موبایل جهت مشاوره', major: 'رشته تحصیلی', university: 'دانشگاه', title: 'عنوان / موضوع', population: 'تعداد جامعه آماری', desc: 'توضیحات / درخواست شما', file: 'آپلود فایل (ZIP, Word, PDF, ...)', submit: 'ثبت سفارش', cancel: 'انصراف' },
+                dashboard: { title: 'پنل کاربری', orderTitle: 'عنوان:', status: 'وضعیت:', pending: 'در انتظار بررسی', completed: 'تکمیل شده (آماده پرداخت)', payBtn: 'پرداخت و مشاهده فایل', finalFile: 'فایل نهایی آماده است.', download: 'دانلود فایل', revisionBtn: 'ارسال اصلاحات', noOrders: 'هنوز سفارشی ثبت نکرده‌اید.' },
+                payment: { title: 'پنل پرداخت', amountLabel: 'مبلغ قابل پرداخت:', cardNum: 'شماره کارت:', sheba: 'شماره شبا:', accName: 'نام صاحب حساب:', warning: 'توجه: در صورت هرگونه کم‌واریز، مبلغ واریزشده به‌عنوان پرداخت ناقص تلقی می‌شود و جهت تکمیل فرآیند، پرداخت مجدد کل هزینه تا آخرین ریال الزامی است. این بررسی و اعمال به‌صورت کاملاً خودکار توسط سایت انجام می‌شود.', confirmBtn: 'تایید نهایی و اتمام سفارش' },
+                auth: { loginTitle: 'ورود / Login', mobile: 'شماره موبایل', password: 'رمز عبور', notRobot: 'من ربات نیستم', loginBtn: 'ورود', noAcc: 'حساب ندارید؟', regBtn: 'ثبت نام کنید', regTitle: 'ثبت نام', firstName: 'نام', lastName: 'نام خانوادگی', haveAcc: 'قبلا ثبت نام کرده‌اید؟', loginNow: 'ورود', province: 'استان', city: 'شهر' },
+                footer: { 
+                    catTitle: 'دسته‌بندی خدمات', guideTitle: 'راهنمای خدمات', contactTitle: 'ارتباط با ما', aboutTitle: 'درباره ما', 
+                    aboutText: 'امور پژوهشی فراز؛ ۵ سال تجربه و ۷۰+ پروژه پژوهشی، همراه مطمئن شما در پروپوزال، مقاله، مشاوره، پاورپوینت دفاع، تحلیل آماری، سمینار و دیگر امور دانشجویی.', 
+                    copyright: 'تمامی حقوق محفوظ است © امور پژوهشی فراز', 
+                    categories: [
+                        { title: "پایان نامه (کارشناسی ارشد و دکترا)", linkTo: "پایان نامه (کارشناسی ارشد و دکترا)" },
+                        { title: "پروپوزال نویسی و طرح تحقیق", linkTo: "پروپوزال نویسی و طرح تحقیق" },
+                        { title: "مقاله نویسی (فارسی و انگلیسی)", linkTo: "مقاله نویسی (فارسی و انگلیسی)" },
+                        { title: "تحلیل آماری با نرم‌افزارهای تخصصی", linkTo: "تحلیل آماری با نرم‌افزارهای تخصصی" },
+                        { title: "تهیه پاورپوینت دفاع", linkTo: "تهیه پاورپوینت دفاع" }
+                    ],
+                    contacts: [
+                        { icon: 'fa-phone', image: null, text: '038-3363251', ltr: true },
+                        { icon: 'fa-mobile-alt', image: null, text: '0913-2803098', ltr: true },
+                        { icon: 'fa-envelope', image: null, text: 'mrh.911023@gmail.com', ltr: false },
+                        { icon: 'fa-paper-plane', image: null, text: 'کانال ایتا: https://eitaa.com/Faraz_Research', ltr: false },
+                        { icon: 'fa-paper-plane', image: null, text: 'آیدی ایتا: @Faraz_search', ltr: false },
+                        { icon: 'fa-comment-dots', image: null, text: 'آیدی بله: @Faraz_Research', ltr: false },
+                        { icon: 'fa-comment', image: null, text: 'آیدی روبیکا: @Faraz_Research', ltr: false },
+                        { icon: 'fa-comments', image: null, text: 'آیدی شاد: @Faraz_Research', ltr: false },
+                        { icon: 'fa-telegram', image: null, text: 'آیدی تلگرام: @Faraz_Research', ltr: false },
+                        { icon: 'fa-whatsapp', image: null, text: 'آیدی واتساپ: @Faraz_Research', ltr: false },
+                        { icon: 'fa-instagram', image: null, text: 'آیدی اینستاگرام: mh0226948', ltr: false }
+                    ]
+                },
+                faq: [ 
+                    { q: "پرداخت هزینه خدمات چگونه و در چه زمانی انجام می‌شود؟", a: "مبلغ خدمات پس از تأیید استاد راهنما/استاد مربوطه دریافت می‌شود. هزینه و جزئیات همکاری قبل از شروع کار به‌صورت شفاف توافق می‌شود و پرداخت فقط بعد از تأیید خروجی توسط استاد انجام می‌گیرد." }, 
+                    { q: "آیا برای شروع کار باید پیش‌پرداخت پرداخت کنم؟", a: "خیر. روند کار به این صورت است که ابتدا موضوع، دامنه خدمات و زمان‌بندی توافق می‌شود؛ کار آغاز می‌شود و پرداخت پس از تأیید استاد انجام می‌شود." },
+                    { q: "اگر استاد اصلاحات بخواهد یا خروجی را تأیید نکند، چه می‌شود؟", a: "در چارچوب توافق اولیه، اصلاحات متعارف انجام می‌شود تا خروجی مورد تأیید استاد قرار گیرد. پرداخت نیز پس از همین تأیید انجام می‌شود. اگر تغییرات خارج از توافق اولیه باشد، هزینه و زمان لازم جداگانه اعلام می‌شود." },
+                    { q: "مراحل همکاری و پیگیری چگونه است؟", a: "مشاوره اولیه و بررسی نیاز ← توافق بر موضوع، خدمات و زمان‌بندی ← انجام کار ← تحویل خروجی ← دریافت بازخورد استاد و اعمال اصلاحات ← تأیید استاد ← پرداخت هزینه. در تمام مراحل، پیگیری و پاسخگویی از سوی ما انجام می‌شود و اطلاعات پروژه شما محرمانه می‌ماند." }
+                ],
+                guide: [ { title: "نحوه ثبت سفارش", text: "برای ثبت سفارش، کافی است از طریق فرم سایت یا راه‌های ارتباطی درخواست خود را ارسال کنید. پس از بررسی اولیه، موضوع، نوع خدمت، زمان‌بندی و هزینه به‌صورت شفاف توافق می‌شود. سپس کار آغاز می‌شود و پس از تحویل خروجی و اعمال اصلاحات، پرداخت هزینه فقط بعد از تأیید استاد انجام می‌گیرد." }, { title: "شیوه‌های ارسال فایل‌ها", text: "تمامی فایل‌ها (اعم از ZIP، Word، PDF و تصاویر) می‌توانند از طریق پنل کاربری شما در سایت یا از طریق پیام‌رسان‌های ذکر شده ارسال شوند. محرمانگی اطلاعات و فایل‌های شما در تمامی مراحل تضمین می‌شود." }, { title: "روش‌های پرداخت", text: "پرداخت فقط پس از تأیید استاد و از طریق کارت به کارت یا انتقال بانکی انجام می‌شود. هزینه قبل از شروع کار شفاف توافق می‌شود، پیش‌پرداخت لازم نیست و رسید پرداخت پس از واریز ارسال می‌گردد." } ],
+                testimonials: {
+                    title: 'نظرات کاربران',
+                    subtitle: 'آنچه دانشجویان درباره ما می‌گویند',
+                    items: [
+                        { name: 'علی رضایی', role: 'دانشجوی ارشد مدیریت', text: 'کیفیت پروپوزال و پشتیبانی عالی بود. واقعاً خیالم راحت شد.', stars: 5 },
+                        { name: 'مریم احمدی', role: 'دانشجوی دکترا روانشناسی', text: 'تحلیل آماری بسیار حرفه‌ای انجام شد و در جلسه دفاع هیچ مشکلی نداشتم.', stars: 5 }
+                    ],
+                    submitBtn: 'ثبت نظر جدید',
+                    formTitle: 'ثبت نظر شما',
+                    formSubmit: 'ارسال نظر',
+                    formCancel: 'انصراف',
+                    fields: [
+                        { id: 'lastName', label: 'نام خانوادگی', type: 'text', required: true },
+                        { id: 'mobile', label: 'شماره موبایل (فقط برای مدیر)', type: 'text', required: true },
+                        { id: 'major', label: 'رشته تحصیلی', type: 'text', required: true },
+                        { id: 'text', label: 'متن نظر شما', type: 'textarea', required: true }
+                    ]
+                },
+                registerFields: [
+                    { id: 'first_name', label: 'نام', type: 'text', required: true },
+                    { id: 'last_name', label: 'نام خانوادگی', type: 'text', required: true },
+                    { id: 'mobile', label: 'شماره موبایل', type: 'text', required: true },
+                    { id: 'major', label: 'رشته تحصیلی', type: 'text', required: true },
+                    { id: 'university', label: 'دانشگاه', type: 'text', required: true },
+                    { id: 'location', label: 'محل سکونت (استان/شهر)', type: 'province_city', required: false },
+                    { id: 'password', label: 'رمز عبور', type: 'password', required: true }
+                ],
+                layout: { home: ['hero', 'services_preview', 'testimonials'], services: ['services_list', 'testimonials'] },
+                customImages: { home: [], services: [] },
+                customBlocks: { home: [], services: [] }
+            },
+            en: {
+                general: { logo: 'https://via.placeholder.com/40x40/1e3a8a/ffffff?text=FR', siteTitle: 'Faraz Research' },
+                nav: { home: 'Home', about: 'About Us', contact: 'Contact Us', faq: 'FAQ', login: 'Login / Register', dashboard: 'Dashboard', logout: 'Logout', getStarted: 'Get Started' },
+                hero: { title: 'Faraz Research', subtitle: 'From Proposal to Defense', desc: 'Providing student services including articles, theses, proposals, statistical analysis, research consulting, editing and proofreading, specialized translation, extracting articles from theses (Master and PhD), topic selection consulting, seminars, defense PowerPoints, authoring, and other university registration affairs.', image: null, bgImage: null },
+                servicesSection: { title: 'Our Services', search: 'Search products...', guarantee: 'Collaboration Guarantee', support: '24/7 Support', payment: 'Card-to-Card Payment', orderBtn: 'Click to place an order.' },
+                services: [
+                    { title: "Thesis (Master & PhD)", icon: "fa-file-alt", image: null, fields: ['mobile', 'major', 'university', 'title', 'description', 'file'], customFields: [] },
+                    { title: "Proposal Writing", icon: "fa-file-alt", image: null, fields: ['mobile', 'major', 'university', 'title', 'description', 'file'], customFields: [] },
+                    { title: "Article Writing (FA/EN)", icon: "fa-file-alt", image: null, fields: ['mobile', 'major', 'university', 'title', 'description', 'file'], customFields: [] },
+                    { title: "Statistical Analysis", icon: "fa-chart-bar", image: null, fields: ['mobile', 'major', 'university', 'title', 'population', 'description', 'file'], customFields: [] },
+                    { title: "Research Consulting", icon: "fa-comments", image: null, fields: ['mobile', 'major', 'university', 'title', 'description', 'file'], customFields: [] },
+                    { title: "Editing & Proofreading", icon: "fa-edit", image: null, fields: ['mobile', 'major', 'university', 'description', 'file'], customFields: [] },
+                    { title: "Specialized Translation", icon: "fa-language", image: null, fields: ['mobile', 'major', 'university', 'description', 'file'], customFields: [] },
+                    { title: "Digital Questionnaire", icon: "fa-clipboard-list", image: null, fields: ['mobile', 'major', 'university', 'title', 'description', 'file'], customFields: [] },
+                    { title: "Article Extraction", icon: "fa-file-export", image: null, fields: ['mobile', 'major', 'university', 'title', 'description', 'file'], customFields: [] },
+                    { title: "Defense PowerPoint", icon: "fa-file-powerpoint", image: null, fields: ['mobile', 'major', 'university', 'title', 'description', 'file'], customFields: [] },
+                    { title: "Topic Selection", icon: "fa-lightbulb", image: null, fields: ['mobile', 'major', 'university', 'title', 'description', 'file'], customFields: [] },
+                    { title: "University Affairs", icon: "fa-university", image: null, fields: ['mobile', 'major', 'university', 'description', 'file'], customFields: [] },
+                    { title: "Logo & Poster Design", icon: "fa-palette", image: null, fields: ['mobile', 'description', 'file'], customFields: [] },
+                    { title: "SMS Advertising", icon: "fa-sms", image: null, fields: ['mobile', 'description', 'file'], customFields: [] },
+                    { title: "Typing & Writing", icon: "fa-keyboard", image: null, fields: ['mobile', 'major', 'university', 'description', 'file'], customFields: [] },
+                    { title: "Audio to Text", icon: "fa-microphone", image: null, fields: ['mobile', 'description', 'file'], customFields: [] },
+                    { title: "Car Internet Registration", icon: "fa-car", image: null, fields: ['mobile', 'description', 'file'], customFields: [] }
+                ],
+                orderForm: { mobile: 'Consultation Mobile', major: 'Major', university: 'University', title: 'Title / Subject', population: 'Statistical Population', desc: 'Description / Request', file: 'Upload File (ZIP, Word, PDF, ...)', submit: 'Submit Order', cancel: 'Cancel' },
+                dashboard: { title: 'User Dashboard', orderTitle: 'Title:', status: 'Status:', pending: 'Pending Review', completed: 'Completed (Ready to Pay)', payBtn: 'Pay & View File', finalFile: 'Final file is ready.', download: 'Download File', revisionBtn: 'Submit Revision', noOrders: 'No orders yet.' },
+                payment: { title: 'Payment Gateway', amountLabel: 'Amount to Pay:', cardNum: 'Card Number:', sheba: 'SHEBA Number:', accName: 'Account Name:', warning: 'Note: In case of underpayment, the paid amount is considered incomplete and full payment is required to complete the process. This is checked automatically.', confirmBtn: 'Confirm and Complete Order' },
+                auth: { loginTitle: 'Login', mobile: 'Mobile Number', password: 'Password', notRobot: 'I am not a robot', loginBtn: 'Login', noAcc: 'No account?', regBtn: 'Register', regTitle: 'Register', firstName: 'First Name', lastName: 'Last Name', haveAcc: 'Already registered?', loginNow: 'Login', province: 'Province', city: 'City' },
+                footer: { 
+                    catTitle: 'Service Categories', guideTitle: 'Service Guide', contactTitle: 'Contact Us', aboutTitle: 'About Us', 
+                    aboutText: 'Faraz Research; 5 years of experience and 70+ research projects, your reliable companion in proposals, articles, consulting, defense PowerPoints, statistical analysis, seminars, and other student affairs.', 
+                    copyright: 'All Rights Reserved © Faraz Research', 
+                    categories: [
+                        { title: "Thesis (Master & PhD)", linkTo: "Thesis (Master & PhD)" },
+                        { title: "Proposal Writing", linkTo: "Proposal Writing" },
+                        { title: "Article Writing (FA/EN)", linkTo: "Article Writing (FA/EN)" },
+                        { title: "Statistical Analysis", linkTo: "Statistical Analysis" },
+                        { title: "Defense PowerPoint", linkTo: "Defense PowerPoint" }
+                    ],
+                    contacts: [
+                        { icon: 'fa-phone', image: null, text: '038-3363251', ltr: true },
+                        { icon: 'fa-mobile-alt', image: null, text: '0913-2803098', ltr: true },
+                        { icon: 'fa-envelope', image: null, text: 'mrh.911023@gmail.com', ltr: false },
+                        { icon: 'fa-telegram', image: null, text: 'Telegram: @Faraz_Research', ltr: false },
+                        { icon: 'fa-whatsapp', image: null, text: 'WhatsApp: @Faraz_Research', ltr: false },
+                        { icon: 'fa-instagram', image: null, text: 'Instagram: mh0226948', ltr: false }
+                    ]
+                },
+                faq: [ 
+                    { q: "How and when is the payment made?", a: "Payment is made after approval by the supervisor/professor. Costs are clearly agreed upon before starting, and payment is only after output approval." }, 
+                    { q: "Do I need to pay a down payment?", a: "No. The topic and timeline are agreed upon first, the work begins, and payment is made after professor approval." },
+                    { q: "What if the professor requests revisions?", a: "Standard revisions are made within the initial agreement to get the output approved. Payment is made after this approval. Out-of-scope changes incur additional costs." },
+                    { q: "What are the collaboration steps?", a: "Initial consultation → Agreement on topic/timeline → Work execution → Delivery → Professor feedback & revisions → Professor approval → Payment." }
+                ],
+                guide: [ { title: "How to Order", text: "To place an order, simply send your request via the site form or contact channels. After initial review, the topic, service type, timing, and cost are clearly agreed upon. The work begins, and payment is made after output delivery and professor approval." }, { title: "File Submission Methods", text: "All files (ZIP, Word, PDF, images) can be sent via your user dashboard or messaging apps. Confidentiality is guaranteed." }, { title: "Payment Methods", text: "Payment is only after professor approval via card-to-card or bank transfer. No prepayment is required." } ],
+                testimonials: {
+                    title: 'User Reviews',
+                    subtitle: 'What students say about us',
+                    items: [
+                        { name: 'Ali Rezaei', role: 'Master of Management', text: 'The quality of the proposal and support was excellent.', stars: 5 },
+                        { name: 'Maryam Ahmadi', role: 'PhD in Psychology', text: 'Statistical analysis was done professionally.', stars: 5 }
+                    ],
+                    submitBtn: 'Submit a Review',
+                    formTitle: 'Submit Your Review',
+                    formSubmit: 'Submit Review',
+                    formCancel: 'Cancel',
+                    fields: [
+                        { id: 'lastName', label: 'Last Name', type: 'text', required: true },
+                        { id: 'mobile', label: 'Mobile Number (Visible to Admin only)', type: 'text', required: true },
+                        { id: 'major', label: 'Major', type: 'text', required: true },
+                        { id: 'text', label: 'Your Review', type: 'textarea', required: true }
+                    ]
+                },
+                registerFields: [
+                    { id: 'first_name', label: 'First Name', type: 'text', required: true },
+                    { id: 'last_name', label: 'Last Name', type: 'text', required: true },
+                    { id: 'mobile', label: 'Mobile Number', type: 'text', required: true },
+                    { id: 'major', label: 'Major', type: 'text', required: true },
+                    { id: 'university', label: 'University', type: 'text', required: true },
+                    { id: 'location', label: 'Location (Province/City)', type: 'province_city', required: false },
+                    { id: 'password', label: 'Password', type: 'password', required: true }
+                ],
+                layout: { home: ['hero', 'services_preview', 'testimonials'], services: ['services_list', 'testimonials'] },
+                customImages: { home: [], services: [] },
+                customBlocks: { home: [], services: [] }
+            },
+            ar: {
+                general: { logo: 'https://via.placeholder.com/40x40/1e3a8a/ffffff?text=FR', siteTitle: 'الأَبْحَاثُ الفَرَازِيَّة' },
+                nav: { home: 'الرَّئِيسِيَّة', about: 'مَنْ نَحْنُ', contact: 'اتَّصِلْ بِنَا', faq: 'الأَسْئِلَةُ الشَّائِعَة', login: 'دُخُول / تَسْجِيل', dashboard: 'لَوْحَةُ التَّحَكُّم', logout: 'خُرُوج', getStarted: 'ابْدَأْ الآن' },
+                hero: { title: 'الأَبْحَاثُ الفَرَازِيَّة', subtitle: 'مِنَ المُقْتَرَحِ إِلَى الدِّفَاع', desc: 'تَقْدِيمُ الخَدَمَاتِ الطُّلَّابِيَّةِ بِمَا فِي ذَلِكَ المَقَالَاتُ، الرَّسَائِلُ، المُقْتَرَحَاتُ، التَّحْلِيلُ الإِحْصَائِيُّ، الاسْتِشَارَاتُ البَحْثِيَّةُ، التَّحْرِيرُ وَالتَّدْقِيقُ اللُّغَوِيُّ، التَّرْجَمَةُ المُتَخَصِّصَةُ، اسْتِخْرَاجُ المَقَالَاتِ مِنَ الرَّسَائِلِ، اسْتِشَارَاتُ اخْتِيَارِ المَوْضُوعِ، النَّدَوَاتُ، عُرُوضُ الدِّفَاعِ، وَالتَّأْلِيفُ وَغَيْرُهَا مِنَ الأُمُورِ الجَامِعِيَّةِ.', image: null, bgImage: null },
+                servicesSection: { title: 'خَدَمَاتُنَا', search: 'البَحْثُ عَنِ المُنْتَجَات...', guarantee: 'ضَمَانُ التَّعَاوُنِ حَتَّى نِهَايَةِ الدِّفَاع', support: 'دَعْمٌ ٢٤/٧', payment: 'الدَّفْعُ بِالبِطَاقَة', orderBtn: 'انْقُرْ لِتَقْدِيمِ طَلَب.' },
+                services: [
+                    { title: "الرِّسَالَة (مَاجِسْتِير وَدُكْتُورَاه)", icon: "fa-file-alt", image: null, fields: ['mobile', 'major', 'university', 'title', 'description', 'file'], customFields: [] },
+                    { title: "كِتَابَةُ المُقْتَرَح", icon: "fa-file-alt", image: null, fields: ['mobile', 'major', 'university', 'title', 'description', 'file'], customFields: [] },
+                    { title: "كِتَابَةُ المَقَالَات", icon: "fa-file-alt", image: null, fields: ['mobile', 'major', 'university', 'title', 'description', 'file'], customFields: [] },
+                    { title: "التَّحْلِيلُ الإِحْصَائِيّ", icon: "fa-chart-bar", image: null, fields: ['mobile', 'major', 'university', 'title', 'population', 'description', 'file'], customFields: [] },
+                    { title: "الاسْتِشَارَاتُ البَحْثِيَّة", icon: "fa-comments", image: null, fields: ['mobile', 'major', 'university', 'title', 'description', 'file'], customFields: [] },
+                    { title: "التَّحْرِيرُ وَالتَّدْقِيق", icon: "fa-edit", image: null, fields: ['mobile', 'major', 'university', 'description', 'file'], customFields: [] },
+                    { title: "التَّرْجَمَةُ المُتَخَصِّصَة", icon: "fa-language", image: null, fields: ['mobile', 'major', 'university', 'description', 'file'], customFields: [] },
+                    { title: "تَصْمِيمُ الاسْتِبْيَانِ الرَّقْمِيّ", icon: "fa-clipboard-list", image: null, fields: ['mobile', 'major', 'university', 'title', 'description', 'file'], customFields: [] },
+                    { title: "اسْتِخْرَاجُ المَقَالَات", icon: "fa-file-export", image: null, fields: ['mobile', 'major', 'university', 'title', 'description', 'file'], customFields: [] },
+                    { title: "عَرْضُ الدِّفَاع", icon: "fa-file-powerpoint", image: null, fields: ['mobile', 'major', 'university', 'title', 'description', 'file'], customFields: [] },
+                    { title: "اسْتِشَارَاتُ اخْتِيَارِ المَوْضُوع", icon: "fa-lightbulb", image: null, fields: ['mobile', 'major', 'university', 'title', 'description', 'file'], customFields: [] },
+                    { title: "الأُمُورُ الجَامِعِيَّة", icon: "fa-university", image: null, fields: ['mobile', 'major', 'university', 'description', 'file'], customFields: [] },
+                    { title: "تَصْمِيمُ الشِّعَارَات", icon: "fa-palette", image: null, fields: ['mobile', 'description', 'file'], customFields: [] },
+                    { title: "الرَّسَائِلُ النَّصِّيَّة", icon: "fa-sms", image: null, fields: ['mobile', 'description', 'file'], customFields: [] },
+                    { title: "الطِّبَاعَةُ وَالكِتَابَة", icon: "fa-keyboard", image: null, fields: ['mobile', 'major', 'university', 'description', 'file'], customFields: [] },
+                    { title: "تَحْوِيلُ الصَّوْتِ إِلَى نَصّ", icon: "fa-microphone", image: null, fields: ['mobile', 'description', 'file'], customFields: [] },
+                    { title: "تَسْجِيلُ الإِنْتَرْنِتِ لِلسَّيَّارَات", icon: "fa-car", image: null, fields: ['mobile', 'description', 'file'], customFields: [] }
+                ],
+                orderForm: { mobile: 'رَقْمُ الجَوَّالِ لِلاسْتِشَارَة', major: 'التَّخَصُّص', university: 'الجَامِعَة', title: 'العُنْوَان / المَوْضُوع', population: 'المُجْتَمَعُ الإِحْصَائِيّ', desc: 'الوَصْف / طَلَبُك', file: 'تَحْمِيلُ المِلَفّ', submit: 'تَأْكِيدُ الطَّلَب', cancel: 'إِلْغَاء' },
+                dashboard: { title: 'لَوْحَةُ تَحَكُّمِ المُسْتَخْدِم', orderTitle: 'العُنْوَان:', status: 'الحَالَة:', pending: 'قَيْدَ المُرَاجَعَة', completed: 'مُكْتَمِل (جَاهِزٌ لِلدَّفْع)', payBtn: 'الدَّفْعُ وَعَرْضُ المِلَفّ', finalFile: 'المِلَفُّ النِّهَائِيُّ جَاهِز.', download: 'تَحْمِيلُ المِلَفّ', revisionBtn: 'إِرْسَالُ التَّعْدِيلَات', noOrders: 'لَا تُوجَدُ طَلَبَاتٌ بَعْد.' },
+                payment: { title: 'بَوَّابَةُ الدَّفْع', amountLabel: 'المَبْلَغُ المَطْلُوب:', cardNum: 'رَقْمُ البِطَاقَة:', sheba: 'رَقْمُ شِيبَا:', accName: 'اسْمُ صَاحِبِ الحِسَاب:', warning: 'مُلَاحَظَة: فِي حَالَةِ الدَّفْعِ النَّاقِص، يُعْتَبَرُ المَبْلَغُ المَدْفُوعُ غَيْرَ مُكْتَمِلٍ وَيُلْزَمُ الدَّفْعُ بِالكَامِلِ لِإِكْمَالِ العَمَلِيَّة.', confirmBtn: 'تَأْكِيدٌ وَإِكْمَالُ الطَّلَب' },
+                auth: { loginTitle: 'تَسْجِيلُ الدُّخُول', mobile: 'رَقْمُ الجَوَّال', password: 'كَلِمَةُ المُرُور', notRobot: 'لَسْتُ رُوبُوتَاً', loginBtn: 'دُخُول', noAcc: 'لَيْسَ لَدَيْكَ حِسَاب؟', regBtn: 'سَجِّلْ الآن', regTitle: 'إِنْشَاءُ حِسَاب', firstName: 'الاسْمُ الأَوَّل', lastName: 'اسْمُ العَائِلَة', haveAcc: 'مُسَجَّلٌ بِالفِعْل؟', loginNow: 'دُخُول', province: 'المُحَافَظَة', city: 'المَدِينَة' },
+                footer: { 
+                    catTitle: 'فِئَاتُ الخَدَمَات', guideTitle: 'دَلِيلُ الخَدَمَات', contactTitle: 'اتَّصِلْ بِنَا', aboutTitle: 'مَنْ نَحْنُ', 
+                    aboutText: 'الأَبْحَاثُ الفَرَازِيَّة؛ ٥ سَنَوَاتٍ مِنَ الخِبْرَةِ وَأَكْثَرُ مِنْ ٧٠ مَشْرُوعَاً بَحْثِيَّاً، رَفِيقُكَ المَوْثُوقُ فِي المُقْتَرَحَاتِ، المَقَالَاتِ، الاسْتِشَارَاتِ، وَعُرُوضِ الدِّفَاع.', 
+                    copyright: 'جَمِيعُ الحُقُوقِ مَحْفُوظَة © الأَبْحَاثُ الفَرَازِيَّة', 
+                    categories: [
+                        { title: "الرِّسَالَة (مَاجِسْتِير وَدُكْتُورَاه)", linkTo: "الرِّسَالَة (مَاجِسْتِير وَدُكْتُورَاه)" },
+                        { title: "كِتَابَةُ المُقْتَرَح", linkTo: "كِتَابَةُ المُقْتَرَح" },
+                        { title: "كِتَابَةُ المَقَالَات", linkTo: "كِتَابَةُ المَقَالَات" },
+                        { title: "التَّحْلِيلُ الإِحْصَائِيّ", linkTo: "التَّحْلِيلُ الإِحْصَائِيّ" },
+                        { title: "عَرْضُ الدِّفَاع", linkTo: "عَرْضُ الدِّفَاع" }
+                    ],
+                    contacts: [
+                        { icon: 'fa-phone', image: null, text: '٠٣٨-٣٣٦٣٢٥١', ltr: true },
+                        { icon: 'fa-mobile-alt', image: null, text: '٠٩١٣-٢٨٠٣٠٩٨', ltr: true },
+                        { icon: 'fa-envelope', image: null, text: 'mrh.911023@gmail.com', ltr: false },
+                        { icon: 'fa-telegram', image: null, text: 'تِلِيجْرَام: @Faraz_Research', ltr: false },
+                        { icon: 'fa-whatsapp', image: null, text: 'وَاتْسَاب: @Faraz_Research', ltr: false },
+                        { icon: 'fa-instagram', image: null, text: 'إِنْسْتَغْرَام: mh0226948', ltr: false }
+                    ]
+                },
+                faq: [ 
+                    { q: "كَيْفَ وَمَتَى يَتِمُّ دَفْعُ تَكَالِيفِ الخَدَمَات؟", a: "يَتِمُّ اسْتِلَامُ مَبْلَغِ الخَدَمَاتِ بَعْدَ مُوَافَقَةِ المُشْرِف. يَتِمُّ الاتِّفَاقُ عَلَى التَّكْلِفَةِ بِشَفَافِيَّةٍ قَبْلَ البَدْء، وَيَتِمُّ الدَّفْعُ فَقَطْ بَعْدَ مُوَافَقَةِ الأُسْتَاذِ عَلَى المُخْرَجَات." }, 
+                    { q: "هَلْ أَحْتَاجُ إِلَى دَفْعِ مُقَدَّم؟", a: "لَا. يَتِمُّ الاتِّفَاقُ عَلَى المَوْضُوعِ أَوَّلاً، يَبْدَأُ العَمَل، وَيَتِمُّ الدَّفْعُ بَعْدَ مُوَافَقَةِ الأُسْتَاذ." },
+                    { q: "مَاذَا لَوْ طَلَبَ الأُسْتَاذُ تَعْدِيلَاتٍ؟", a: "تَتِمُّ التَّعْدِيلَاتُ المِعْيَارِيَّةُ ضِمْنَ الاتِّفَاقِ الأَوَّلِيِّ. يَتِمُّ الدَّفْعُ بَعْدَ هَذِهِ المُوَافَقَة. التَّغْيِيرَاتُ الخَارِجِيَّةُ عَنِ الاتِّفَاقِ تَتَطَلَّبُ تَكَالِيفَ إِضَافِيَّة." },
+                    { q: "مَا هِيَ خُطُوَاتُ التَّعَاوُن؟", a: "اسْتِشَارَةٌ أَوَّلِيَّةٌ ← اتِّفَاقٌ عَلَى المَوْضُوعِ ← تَنْفِيذُ العَمَلِ ← التَّسْلِيمُ ← مُرَاجَعَةُ الأُسْتَاذِ وَالتَّعْدِيلَاتُ ← مُوَافَقَةُ الأُسْتَاذِ ← الدَّفْع." }
+                ],
+                guide: [ { title: "كَيْفِيَّةُ الطَّلَب", text: "لِتَقْدِيمِ طَلَب، مَا عَلَيْكَ سِوَى إِرْسَالِ طَلَبِكَ عَبْرَ نَمُوذَجِ المَوْقِع. بَعْدَ المُرَاجَعَةِ الأَوَّلِيَّة، يَتِمُّ الاتِّفَاقُ عَلَى المَوْضُوعِ وَالتَّكْلِفَة. يَبْدَأُ العَمَل، وَيَتِمُّ الدَّفْعُ بَعْدَ تَسْلِيمِ المُخْرَجَاتِ وَمُوَافَقَةِ الأُسْتَاذ." }, { title: "طُرُقُ إِرْسَالِ المِلَفَّات", text: "يُمْكِنُ إِرْسَالُ جَمِيعِ المِلَفَّاتِ عَبْرَ لَوْحَةِ التَّحَكُّمِ الخَاصَّةِ بِكَ أَوْ تَطْبِيقَاتِ المُرَاسَلَة. السَّرِّيَّةُ مَضْمُونَة." }, { title: "طُرُقُ الدَّفْع", text: "يَتِمُّ الدَّفْعُ فَقَطْ بَعْدَ مُوَافَقَةِ الأُسْتَاذِ عَبْرَ البِطَاقَةِ أَوِ التَّحْوِيلِ البَنْكِيّ. لَا حَاجَةَ لِدَفْعَةٍ مُقَدَّمَة." } ],
+                testimonials: {
+                    title: 'آرَاءُ المُسْتَخْدِمِين',
+                    subtitle: 'مَاذَا يَقُولُ الطُّلَّابُ عَنَّا',
+                    items: [
+                        { name: 'عَلِيّ رِضَائِيّ', role: 'طَالِبُ مَاجِسْتِير', text: 'كَانَتْ جَوْدَةُ المُقْتَرَحِ وَالدَّعْمُ مُمْتَازَة.', stars: 5 },
+                        { name: 'مَرْيَم أَحْمَدِيّ', role: 'طَالِبَةُ دُكْتُورَاه', text: 'تَمَّ إِجْرَاءُ التَّحْلِيلِ الإِحْصَائِيِّ بِاحْتِرَافِيَّةٍ عَالِيَة.', stars: 5 }
+                    ],
+                    submitBtn: 'أَضِفْ رَأْيَك',
+                    formTitle: 'إِرْسَالُ رَأْيِك',
+                    formSubmit: 'إِرْسَال',
+                    formCancel: 'إِلْغَاء',
+                    fields: [
+                        { id: 'lastName', label: 'اسْمُ العَائِلَة', type: 'text', required: true },
+                        { id: 'mobile', label: 'رَقْمُ الجَوَّال (لِلْإِدَارَةِ فَقَط)', type: 'text', required: true },
+                        { id: 'major', label: 'التَّخَصُّص', type: 'text', required: true },
+                        { id: 'text', label: 'نَصُّ رَأْيِك', type: 'textarea', required: true }
+                    ]
+                },
+                registerFields: [
+                    { id: 'first_name', label: 'الاسْمُ الأَوَّل', type: 'text', required: true },
+                    { id: 'last_name', label: 'اسْمُ العَائِلَة', type: 'text', required: true },
+                    { id: 'mobile', label: 'رَقْمُ الجَوَّال', type: 'text', required: true },
+                    { id: 'major', label: 'التَّخَصُّص', type: 'text', required: true },
+                    { id: 'university', label: 'الجَامِعَة', type: 'text', required: true },
+                    { id: 'location', label: 'مَكَانُ الإِقَامَة (المُحَافَظَة/المَدِينَة)', type: 'province_city', required: false },
+                    { id: 'password', label: 'كَلِمَةُ المُرُور', type: 'password', required: true }
+                ],
+                layout: { home: ['hero', 'services_preview', 'testimonials'], services: ['services_list', 'testimonials'] },
+                customImages: { home: [], services: [] },
+                customBlocks: { home: [], services: [] }
+            }
+        };
+
+        function app() {
+            return {
+                lang: 'fa', cmsLang: 'fa', view: 'home',
+                showLogin: false, showFAQ: false, showGuide: false, showOrderModal: false,
+                isRegister: false, currentUser: null, orders: [], paymentOrder: null,
+                adminTab: 'orders', activeGuide: null, activeFaq: null,
+                searchQuery: '',
+                newBlockType: 'custom_text_home',
+                
+                siteContent: JSON.parse(JSON.stringify(defaultContent)),
+                cloudId: localStorage.getItem('faraz_cloud_id') || '', // For Cross-Device Sync
+                
+                loginForm: { mobile: '', password: '', isNotRobot: false },
+                adminCredentials: { mobile: '706009', password: '706009' },
+                newAdminMobile: '', newAdminPassword: '',
+                
+                registerForm: {},
+                selectedProvince: '',
+                
+                orderForm: { service: '', title: '', university: '', major: '', mobile: '', population: '', description: '', file: null, activeFields: [], customFields: [], customValues: {} },
+                
+                userReviews: [],
+                showReviewModal: false,
+                reviewForm: {},
+                
+                availableIcons: [
+                    'fa-file-alt', 'fa-chart-bar', 'fa-comments', 'fa-edit', 'fa-language', 
+                    'fa-clipboard-list', 'fa-file-export', 'fa-file-powerpoint', 'fa-lightbulb', 
+                    'fa-university', 'fa-palette', 'fa-sms', 'fa-keyboard', 'fa-microphone', 
+                    'fa-car', 'fa-star', 'fa-phone', 'fa-mobile-alt', 'fa-envelope', 
+                    'fa-paper-plane', 'fa-telegram', 'fa-whatsapp', 'fa-instagram', 'fa-globe', 'fa-link'
+                ],
+                
+                provincesList: Object.keys(iranLocations),
+                citiesList: [],
+
+                init() {
+                    const savedOrders = localStorage.getItem('faraz_orders_v12');
+                    if (savedOrders) this.orders = JSON.parse(savedOrders);
+                    
+                    const savedUser = localStorage.getItem('faraz_user');
+                    if (savedUser) this.currentUser = JSON.parse(savedUser);
+
+                    const savedContent = localStorage.getItem('faraz_content_v12');
+                    if (savedContent) {
+                        this.siteContent = JSON.parse(savedContent);
+                    }
+
+                    const savedReviews = localStorage.getItem('faraz_reviews_v12');
+                    if (savedReviews) this.userReviews = JSON.parse(savedReviews);
+
+                    const savedAdmin = localStorage.getItem('faraz_admin_creds');
+                    if (savedAdmin) this.adminCredentials = JSON.parse(savedAdmin);
+                    
+                    this.resetRegisterForm();
+                    this.resetReviewForm();
+                },
+
+                get t() { return this.siteContent[this.lang]; },
+
+                getFilteredServices() {
+                    if (!this.searchQuery) return this.t.services;
+                    return this.t.services.filter(s => s.title.toLowerCase().includes(this.searchQuery.toLowerCase()));
+                },
+
+                getCartCount() {
+                    if (!this.currentUser || this.currentUser.role === 'admin') return 0;
+                    return this.orders.filter(o => o.userMobile === this.currentUser.mobile).length;
+                },
+
+                getCombinedReviews() {
+                    let combined = [...this.t.testimonials.items];
+                    this.userReviews.forEach(r => {
+                        combined.push({
+                            name: r.lastName || r.name || 'User',
+                            role: r.major || r.role || 'Student',
+                            text: r.text,
+                            stars: r.stars || 5
+                        });
+                    });
+                    return combined;
+                },
+
+                switchLang(l) {
+                    this.lang = l;
+                    document.documentElement.dir = l === 'en' ? 'ltr' : 'rtl';
+                    document.documentElement.lang = l;
+                    this.resetRegisterForm();
+                    this.resetReviewForm();
+                },
+
+                updateCities() {
+                    this.citiesList = iranLocations[this.selectedProvince] || [];
+                    this.registerForm['city'] = ''; 
+                },
+
+                login() {
+                    if (!this.loginForm.isNotRobot) {
+                        alert(this.lang === 'fa' ? 'لطفا تیک "من ربات نیستم" را بزنید.' : (this.lang === 'ar' ? 'يُرْجَى تَحْدِيدُ "لَسْتُ رُوبُوتَاً".' : 'Please check "I am not a robot".'));
+                        return;
+                    }
+
+                    const { mobile, password } = this.loginForm;
+                    if (mobile === this.adminCredentials.mobile && password === this.adminCredentials.password) {
+                        this.currentUser = { role: 'admin', name: 'Admin', mobile: mobile };
+                        localStorage.setItem('faraz_user', JSON.stringify(this.currentUser));
+                        this.showLogin = false; this.view = 'admin';
+                    } else {
+                        const users = JSON.parse(localStorage.getItem('faraz_users') || '[]');
+                        const user = users.find(u => u.mobile === mobile && u.password === password);
+                        if (user) {
+                            this.currentUser = { role: 'user', name: user.first_name, mobile: user.mobile };
+                            localStorage.setItem('faraz_user', JSON.stringify(this.currentUser));
+                            this.showLogin = false; this.view = 'dashboard';
+                        } else { alert(this.lang === 'fa' ? 'اطلاعات نامعتبر' : (this.lang === 'ar' ? 'بَيَانَاتٌ غَيْرُ صَحِيحَة' : 'Invalid credentials')); }
+                    }
+                },
+
+                resetRegisterForm() {
+                    this.registerForm = {};
+                    this.t.registerFields.forEach(f => {
+                        this.registerForm[f.id] = '';
+                    });
+                    this.selectedProvince = '';
+                    this.citiesList = [];
+                },
+
+                register() {
+                    const users = JSON.parse(localStorage.getItem('faraz_users') || '[]');
+                    if (users.find(u => u.mobile === this.registerForm.mobile)) {
+                        alert(this.lang === 'fa' ? 'این شماره قبلا ثبت نام کرده است.' : (this.lang === 'ar' ? 'هَذَا الرَّقْمُ مُسَجَّلٌ بِالفِعْل.' : 'Already registered.')); return;
+                    }
+                    
+                    if (this.registerForm.location !== undefined && this.selectedProvince) {
+                        this.registerForm.location = `${this.selectedProvince} - ${this.registerForm.city}`;
+                    }
+                    
+                    users.push(this.registerForm);
+                    localStorage.setItem('faraz_users', JSON.stringify(users));
+                    alert(this.lang === 'fa' ? 'ثبت نام موفق' : (this.lang === 'ar' ? 'تَمَّ التَّسْجِيلُ بِنَجَاح' : 'Registered successfully')); 
+                    this.isRegister = false; 
+                    this.loginForm.mobile = this.registerForm.mobile;
+                },
+
+                logout() { this.currentUser = null; localStorage.removeItem('faraz_user'); this.view = 'home'; },
+
+                updateAdminCreds() {
+                    if (!this.newAdminMobile || !this.newAdminPassword) { alert('Fill both fields'); return; }
+                    this.adminCredentials.mobile = this.newAdminMobile;
+                    this.adminCredentials.password = this.newAdminPassword;
+                    localStorage.setItem('faraz_admin_creds', JSON.stringify(this.adminCredentials));
+                    alert('Admin credentials updated successfully!');
+                    this.newAdminMobile = ''; this.newAdminPassword = '';
+                },
+
+                openOrder(serviceObj) {
+                    if (!this.currentUser) { this.showLogin = true; return; }
+                    
+                    let service = serviceObj;
+                    if (typeof serviceObj === 'string') {
+                        const found = this.t.services.find(s => s.title === serviceObj);
+                        if (found) service = found;
+                        else service = { title: serviceObj, fields: ['mobile', 'major', 'university', 'title', 'description', 'file'], customFields: [] };
+                    }
+
+                    this.orderForm = { 
+                        service: service.title, title: '', university: '', major: '', mobile: this.currentUser.mobile || '', 
+                        population: '', description: '', file: null, 
+                        activeFields: service.fields || ['mobile', 'major', 'university', 'title', 'description', 'file'],
+                        customFields: service.customFields || [],
+                        customValues: {}
+                    };
+                    this.showOrderModal = true;
+                },
+
+                submitOrder() {
+                    const newOrder = {
+                        id: Date.now(), userMobile: this.currentUser.mobile, service: this.orderForm.service,
+                        title: this.orderForm.title, university: this.orderForm.university, major: this.orderForm.major,
+                        mobile: this.orderForm.mobile, population: this.orderForm.population, description: this.orderForm.description,
+                        customValues: this.orderForm.customValues,
+                        status: 'Pending', price: 0, adminFile: null, revisionFile: null,
+                        fileName: this.orderForm.file ? this.orderForm.file.name : null
+                    };
+                    this.orders.push(newOrder);
+                    localStorage.setItem('faraz_orders_v12', JSON.stringify(this.orders));
+                    this.showOrderModal = false; this.view = 'dashboard';
+                    alert(this.lang === 'fa' ? 'سفارش شما ثبت شد.' : (this.lang === 'ar' ? 'تَمَّ تَسْجِيلُ طَلَبِك.' : 'Order submitted.'));
+                },
+
+                updateOrderStatus(id, status, price) {
+                    const order = this.orders.find(o => o.id === id);
+                    if (order) {
+                        order.status = status; if (price) order.price = price;
+                        localStorage.setItem('faraz_orders_v12', JSON.stringify(this.orders));
+                    }
+                },
+
+                goToPayment(order) { this.paymentOrder = order; this.view = 'payment'; },
+                confirmPayment() { this.updateOrderStatus(this.paymentOrder.id, 'Paid'); this.view = 'dashboard'; alert('Paid / پرداخت شد'); },
+
+                openGuide(index) { this.activeGuide = index; this.showGuide = true; },
+                toggleFaq(index) { this.activeFaq = this.activeFaq === index ? null : index; },
+
+                // --- Cross-Device Cloud Sync Methods ---
+                async saveToCloud() {
+                    if (!this.cloudId) {
+                        try {
+                            const res = await fetch('https://jsonblob.com/api/jsonBlob', {
+                                method: 'POST',
+                                body: JSON.stringify(this.siteContent),
+                                headers: { 'Content-Type': 'application/json' }
+                            });
+                            const location = res.headers.get('Location');
+                            if (location) {
+                                this.cloudId = location.split('/').pop();
+                                localStorage.setItem('faraz_cloud_id', this.cloudId);
+                                alert('همگام‌سازی ابری ایجاد شد! کد شما: ' + this.cloudId + '\nاین کد را برای دستگاه‌های دیگر کپی کنید.');
+                            }
+                        } catch (e) { alert('خطا در ایجاد همگام‌سازی ابری. اتصال اینترنت را بررسی کنید.'); }
+                    } else {
+                        try {
+                            await fetch('https://jsonblob.com/api/jsonBlob/' + this.cloudId, {
+                                method: 'PUT',
+                                body: JSON.stringify(this.siteContent),
+                                headers: { 'Content-Type': 'application/json' }
+                            });
+                            // alert('تغییرات در ابر ذخیره شد!');
+                        } catch (e) { alert('خطا در ذخیره ابری'); }
+                    }
+                },
+                async loadFromCloud() {
+                    if (!this.cloudId) { alert('لطفا ابتدا کد همگام‌سازی را وارد کنید.'); return; }
+                    try {
+                        const res = await fetch('https://jsonblob.com/api/jsonBlob/' + this.cloudId);
+                        if (res.ok) {
+                            const data = await res.json();
+                            this.siteContent = data;
+                            localStorage.setItem('faraz_content_v12', JSON.stringify(data));
+                            localStorage.setItem('faraz_cloud_id', this.cloudId);
+                            alert('اطلاعات با موفقیت از ابر بارگذاری شد!');
+                        } else {
+                            alert('کد همگام‌سازی نامعتبر است یا منقضی شده.');
+                        }
+                    } catch (e) { alert('خطا در بارگذاری از ابر'); }
+                },
+
+                saveContent() {
+                    localStorage.setItem('faraz_content_v12', JSON.stringify(this.siteContent));
+                    this.saveToCloud(); // Automatically sync to cloud
+                    alert(this.lang === 'fa' ? 'تغییرات ذخیره شد و در حال ارسال به ابر است...' : 'Saved locally & syncing to cloud...');
+                },
+                
+                resetContent() {
+                    if(confirm('Are you sure? Reset all texts to default?')) {
+                        this.siteContent = JSON.parse(JSON.stringify(defaultContent));
+                        this.saveContent();
+                    }
+                },
+
+                handleImageUpload(event, targetObj, key) {
+                    const file = event.target.files[0];
+                    if (file) {
+                        // Check file size (max 500KB to prevent Cloud Sync issues)
+                        if (file.size > 500 * 1024) {
+                            alert('حجم عکس نباید بیشتر از 500 کیلوبایت باشد تا همگام‌سازی ابری به درستی کار کند.');
+                            return;
+                        }
+                        const reader = new FileReader();
+                        reader.onload = (e) => { 
+                            targetObj[key] = e.target.result; 
+                            if (key === 'logo') {
+                                this.siteContent.fa.general.logo = e.target.result;
+                                this.siteContent.en.general.logo = e.target.result;
+                                this.siteContent.ar.general.logo = e.target.result;
+                            }
+                            if (key === 'bgImage') {
+                                this.siteContent.fa.hero.bgImage = e.target.result;
+                                this.siteContent.en.hero.bgImage = e.target.result;
+                                this.siteContent.ar.hero.bgImage = e.target.result;
+                            }
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                },
+                removeImage(targetObj, key) { 
+                    targetObj[key] = null; 
+                    if (key === 'logo') {
+                        this.siteContent.fa.general.logo = null;
+                        this.siteContent.en.general.logo = null;
+                        this.siteContent.ar.general.logo = null;
+                    }
+                    if (key === 'bgImage') {
+                        this.siteContent.fa.hero.bgImage = null;
+                        this.siteContent.en.hero.bgImage = null;
+                        this.siteContent.ar.hero.bgImage = null;
+                    }
+                },
+                
+                addService() { 
+                    this.siteContent[this.cmsLang].services.push({ title: "New Service", icon: "fa-star", image: null, fields: ['mobile', 'description', 'file'], customFields: [] }); 
+                },
+                removeService(index) { this.siteContent[this.cmsLang].services.splice(index, 1); },
+                
+                toggleServiceField(service, field) {
+                    if (service.fields.includes(field)) {
+                        service.fields = service.fields.filter(f => f !== field);
+                    } else {
+                        service.fields.push(field);
+                    }
+                },
+
+                addCustomField(service) {
+                    service.customFields.push({ label: "New Field", type: "text" });
+                },
+                removeCustomField(service, index) {
+                    service.customFields.splice(index, 1);
+                },
+
+                addFormField(type) { 
+                    let newField = { id: 'field_' + Date.now(), label: 'New Field', type: 'text', required: false };
+                    if (type === 'register') {
+                        this.siteContent[this.cmsLang].registerFields.push(newField);
+                    } else {
+                        this.siteContent[this.cmsLang].testimonials.fields.push(newField);
+                    }
+                },
+                removeFormField(type, index) {
+                    if (type === 'register') {
+                        this.siteContent[this.cmsLang].registerFields.splice(index, 1);
+                    } else {
+                        this.siteContent[this.cmsLang].testimonials.fields.splice(index, 1);
+                    }
+                },
+
+                resetReviewForm() {
+                    this.reviewForm = {};
+                    this.t.testimonials.fields.forEach(f => {
+                        this.reviewForm[f.id] = f.type === 'number' ? 5 : '';
+                    });
+                },
+                submitReview() {
+                    this.userReviews.push({ ...this.reviewForm, id: Date.now() });
+                    localStorage.setItem('faraz_reviews_v12', JSON.stringify(this.userReviews));
+                    this.showReviewModal = false;
+                    this.resetReviewForm();
+                    alert(this.lang === 'fa' ? 'نظر شما ثبت شد. متشکریم!' : 'Review submitted. Thank you!');
+                },
+                deleteReview(index) {
+                    if(confirm('Delete?')) {
+                        this.userReviews.splice(index, 1);
+                        localStorage.setItem('faraz_reviews_v12', JSON.stringify(this.userReviews));
+                    }
+                },
+
+                addCategory() {
+                    this.siteContent[this.cmsLang].footer.categories.push({ title: "New Category", linkTo: "" });
+                },
+                removeCategory(index) {
+                    this.siteContent[this.cmsLang].footer.categories.splice(index, 1);
+                },
+                addContact() { this.siteContent[this.cmsLang].footer.contacts.push({ icon: 'fa-link', image: null, text: 'New Contact', ltr: false }); },
+                removeContact(index) { this.siteContent[this.cmsLang].footer.contacts.splice(index, 1); },
+
+                moveSection(page, index, direction) {
+                    const arr = this.siteContent[this.cmsLang].layout[page];
+                    if (direction === 'up' && index > 0) {
+                        [arr[index - 1], arr[index]] = [arr[index], arr[index - 1]];
+                    } else if (direction === 'down' && index < arr.length - 1) {
+                        [arr[index + 1], arr[index]] = [arr[index], arr[index + 1]];
+                    }
+                },
+                addLayoutSection(page) {
+                    let sectionName = '';
+                    if (page === 'home') {
+                        if (this.newBlockType === 'text_home') sectionName = 'custom_text';
+                        else if (this.newBlockType === 'image_home') sectionName = 'custom_image';
+                    } else {
+                        if (this.newBlockType === 'text_services') sectionName = 'custom_text';
+                        else if (this.newBlockType === 'image_services') sectionName = 'custom_image';
+                    }
+                    
+                    if (sectionName) {
+                        this.siteContent[this.cmsLang].layout[page].push(sectionName);
+                        if (sectionName === 'custom_text') {
+                            this.siteContent[this.cmsLang].customBlocks[page].push({ title: 'عنوان جدید', text: 'متن جدید...' });
+                        } else if (sectionName === 'custom_image') {
+                            this.siteContent[this.cmsLang].customImages[page].push({ url: 'https://via.placeholder.com/800x200?text=New+Image', position: 'middle' });
+                        }
+                    }
+                },
+                removeLayoutSection(page, index) {
+                    this.siteContent[this.cmsLang].layout[page].splice(index, 1);
+                },
+                addCustomImage(page) {
+                    this.siteContent[this.cmsLang].customImages[page].push({ url: 'https://via.placeholder.com/800x200?text=New+Image', position: 'top' });
+                },
+                removeCustomImage(page, index) {
+                    this.siteContent[this.cmsLang].customImages[page].splice(index, 1);
+                },
+                uploadCustomImage(event, page, index) {
+                    const file = event.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => { this.siteContent[this.cmsLang].customImages[page][index].url = e.target.result; };
+                        reader.readAsDataURL(file);
+                    }
+                },
+                addCustomBlock(page) {
+                    this.siteContent[this.cmsLang].customBlocks[page].push({ title: 'New Block', text: 'Text...' });
+                },
+                removeCustomBlock(page, index) {
+                    this.siteContent[this.cmsLang].customBlocks[page].splice(index, 1);
+                },
+                
+                addFaq() { this.siteContent[this.cmsLang].faq.push({ q: "New Question?", a: "Answer..." }); },
+                removeFaq(index) { this.siteContent[this.cmsLang].faq.splice(index, 1); }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 text-gray-800 antialiased min-h-screen flex flex-col">
+
+    <!-- Navbar -->
+    <nav class="bg-white/90 backdrop-blur-md fixed w-full z-50 shadow-sm border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div @click="view = 'home'" class="flex items-center gap-3 cursor-pointer">
+                    <img :src="siteContent.fa.general.logo" class="w-10 h-10 rounded-lg object-cover" alt="Logo">
+                    <span class="text-xl font-bold text-blue-900" x-text="t.general.siteTitle"></span>
+                </div>
+                
+                <div class="hidden md:flex items-center gap-8">
+                    <a @click="view = 'home'" href="#" class="text-gray-700 hover:text-blue-900 transition-colors font-medium" x-text="t.nav.home"></a>
+                    <a href="#about" class="text-gray-700 hover:text-blue-900 transition-colors font-medium" x-text="t.nav.about"></a>
+                    <a href="#contact" class="text-gray-700 hover:text-blue-900 transition-colors font-medium" x-text="t.nav.contact"></a>
+                    <a @click.prevent="showFAQ = true; activeFaq = null" href="#" class="text-gray-700 hover:text-blue-900 transition-colors font-medium" x-text="t.nav.faq"></a>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-1 border rounded-full px-2 py-1 bg-gray-50">
+                        <button @click="switchLang('fa')" :class="lang === 'fa' ? 'bg-blue-900 text-white' : 'text-gray-500 hover:text-blue-900'" class="px-2 py-0.5 rounded-full text-xs font-bold transition-all">FA</button>
+                        <button @click="switchLang('en')" :class="lang === 'en' ? 'bg-blue-900 text-white' : 'text-gray-500 hover:text-blue-900'" class="px-2 py-0.5 rounded-full text-xs font-bold transition-all">EN</button>
+                        <button @click="switchLang('ar')" :class="lang === 'ar' ? 'bg-blue-900 text-white' : 'text-gray-500 hover:text-blue-900'" class="px-2 py-0.5 rounded-full text-xs font-bold transition-all">AR</button>
+                    </div>
+                    
+                    <div @click="currentUser ? view = 'dashboard' : showLogin = true" class="relative cursor-pointer text-gray-600 hover:text-blue-900 transition-colors">
+                        <i class="fas fa-shopping-cart text-2xl"></i>
+                        <span x-show="getCartCount() > 0" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center" x-text="getCartCount()"></span>
+                    </div>
+
+                    <template x-if="!currentUser">
+                        <div class="flex gap-3 items-center hidden md:flex">
+                            <button @click="showLogin = true; isRegister = false" class="text-blue-900 font-medium hover:text-blue-700 text-sm" x-text="t.nav.login"></button>
+                            <button @click="view = 'services'" class="bg-blue-900 text-white px-6 py-2 rounded-full hover:bg-blue-800 transition-all shadow-lg text-sm" x-text="t.nav.getStarted"></button>
+                        </div>
+                    </template>
+
+                    <template x-if="currentUser">
+                        <div class="flex gap-3 items-center">
+                            <button @click="view = currentUser.role === 'admin' ? 'admin' : 'dashboard'" class="bg-blue-900 text-white px-6 py-2 rounded-full hover:bg-blue-800 transition-all shadow-lg text-sm" x-text="t.nav.dashboard"></button>
+                            <button @click="logout" class="text-red-500 hover:text-red-700 text-sm" x-text="t.nav.logout"></button>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="pt-20 flex-grow">
+        
+        <!-- HOME VIEW -->
+        <div x-show="view === 'home'" x-cloak>
+            <template x-for="(section, sIndex) in t.layout.home" :key="sIndex">
+                <div>
+                    <template x-if="section === 'hero'">
+                        <section class="hero-bg min-h-[80vh] flex items-center relative overflow-hidden" 
+                                 :style="t.hero.bgImage ? `background-image: url('${t.hero.bgImage}'); background-size: cover; background-position: center;` : ''">
+                            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-12 items-center relative z-10 py-12">
+                                <div class="space-y-6">
+                                    <h1 class="text-5xl md:text-6xl font-bold text-gray-900 leading-tight" x-text="t.hero.title"></h1>
+                                    <h2 class="text-2xl text-blue-800 font-semibold" x-text="t.hero.subtitle"></h2>
+                                    <p class="text-gray-600 leading-relaxed text-lg" x-text="t.hero.desc"></p>
+                                    <div class="flex gap-4 pt-4">
+                                        <button @click="view = 'services'" class="bg-blue-900 text-white px-8 py-3 rounded-full hover:bg-blue-800 transition-all shadow-lg text-lg" x-text="t.nav.getStarted"></button>
+                                        <button @click="showLogin = true; isRegister = false" class="border border-blue-900 text-blue-900 px-8 py-3 rounded-full hover:bg-blue-50 transition-all text-lg" x-text="t.nav.login"></button>
+                                    </div>
+                                </div>
+                                <div class="relative flex justify-center">
+                                    <div class="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl transform rotate-3 hover:rotate-0 transition-transform duration-500 text-center">
+                                        <template x-if="t.hero.image">
+                                            <img :src="t.hero.image" class="w-full h-auto rounded-xl object-cover">
+                                        </template>
+                                        <template x-if="!t.hero.image">
+                                            <div>
+                                                <div class="flex justify-center mb-6"><i class="fas fa-graduation-cap text-6xl text-blue-900"></i></div>
+                                                <div class="flex justify-around">
+                                                    <i class="fas fa-book-open text-4xl text-yellow-600"></i>
+                                                    <i class="fas fa-file-alt text-4xl text-gray-400"></i>
+                                                    <i class="fas fa-chart-pie text-4xl text-green-600"></i>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </template>
+
+                    <template x-if="section === 'services_preview'">
+                        <section class="max-w-7xl mx-auto px-4 py-16">
+                            <div class="text-center mb-10">
+                                <h2 class="text-3xl font-bold text-blue-900" x-text="t.servicesSection.title"></h2>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <template x-for="service in t.services.slice(0, 6)" :key="service.title">
+                                    <div @click="openOrder(service)" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 cursor-pointer service-card text-center">
+                                        <template x-if="service.image">
+                                            <img :src="service.image" class="w-12 h-12 mx-auto mb-4 object-contain">
+                                        </template>
+                                        <template x-if="!service.image">
+                                            <i class="fas text-3xl text-blue-900 mb-4" :class="service.icon"></i>
+                                        </template>
+                                        <h3 class="font-bold" x-text="service.title"></h3>
+                                    </div>
+                                </template>
+                            </div>
+                        </section>
+                    </template>
+
+                    <template x-if="section === 'testimonials'">
+                        <section class="bg-gray-100 py-16">
+                            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                                <h2 class="text-3xl font-bold text-blue-900 mb-2" x-text="t.testimonials.title"></h2>
+                                <p class="text-gray-600 mb-6" x-text="t.testimonials.subtitle"></p>
+                                <button @click="resetReviewForm(); showReviewModal = true" class="mb-10 bg-blue-900 text-white px-6 py-2 rounded-full hover:bg-blue-800 transition-all shadow-md text-sm">
+                                    <i class="fas fa-plus-circle mr-2"></i> <span x-text="t.testimonials.submitBtn"></span>
+                                </button>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                    <template x-for="(review, index) in getCombinedReviews()" :key="index">
+                                        <div class="bg-white p-6 rounded-2xl shadow-md border border-gray-100 flex flex-col justify-between relative">
+                                            <i class="fas fa-quote-right text-4xl text-blue-100 absolute top-4 left-4"></i>
+                                            <p class="text-gray-700 text-sm leading-relaxed mb-6 relative z-10" x-text="review.text"></p>
+                                            <div class="flex items-center justify-between border-t pt-4">
+                                                <div class="text-left">
+                                                    <h4 class="font-bold text-blue-900" x-text="review.name"></h4>
+                                                    <span class="text-xs text-gray-500" x-text="review.role"></span>
+                                                </div>
+                                                <div class="text-yellow-400 text-sm">
+                                                    <template x-for="i in 5"><i class="fas fa-star" :class="i <= review.stars ? 'text-yellow-400' : 'text-gray-300'"></i></template>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </section>
+                    </template>
+
+                    <template x-if="section === 'custom_text'">
+                        <section class="max-w-4xl mx-auto px-4 py-12 text-center">
+                            <template x-if="t.customBlocks.home.length > 0">
+                                <div>
+                                    <h2 class="text-2xl font-bold text-blue-900 mb-4" x-text="t.customBlocks.home[0].title"></h2>
+                                    <p class="text-gray-600 text-lg leading-relaxed" x-text="t.customBlocks.home[0].text"></p>
+                                </div>
+                            </template>
+                        </section>
+                    </template>
+
+                    <template x-if="section === 'custom_image'">
+                        <section class="max-w-7xl mx-auto px-4 py-8 text-center">
+                             <template x-if="t.customImages.home.length > 0">
+                                <img :src="t.customImages.home[0].url" class="w-full max-w-4xl mx-auto rounded-2xl shadow-lg">
+                            </template>
+                        </section>
+                    </template>
+
+                </div>
+            </template>
+        </div>
+
+        <!-- SERVICES VIEW -->
+        <div x-show="view === 'services'" x-cloak>
+            <template x-for="(section, sIndex) in t.layout.services" :key="sIndex">
+                <div>
+                    <template x-if="section === 'services_list'">
+                        <section class="max-w-7xl mx-auto px-4 py-12">
+                            <div class="flex flex-col md:flex-row justify-between items-center mb-8 bg-white p-4 rounded-xl shadow-sm gap-4">
+                                <div class="w-full md:w-1/3 text-right">
+                                    <h2 class="text-2xl font-bold text-blue-900" x-text="t.servicesSection.title"></h2>
+                                </div>
+                                <div class="relative w-full md:w-1/3">
+                                    <input type="text" x-model="searchQuery" :placeholder="t.servicesSection.search" class="border rounded-full px-4 py-2 w-full outline-none focus:ring-2 focus:ring-blue-500 pr-10">
+                                    <i class="fas fa-search absolute right-3 top-3 text-gray-400"></i>
+                                </div>
+                                <div class="w-full md:w-1/3 flex justify-end">
+                                    <div class="relative cursor-pointer" @click="currentUser ? view = 'dashboard' : showLogin = true">
+                                        <i class="fas fa-shopping-cart text-2xl text-gray-600"></i>
+                                        <span x-show="getCartCount() > 0" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center" x-text="getCartCount()"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 text-center">
+                                <div class="bg-blue-50 p-6 rounded-2xl"><i class="fas fa-shield-alt text-3xl text-blue-900 mb-3"></i><h3 class="font-bold" x-text="t.servicesSection.guarantee"></h3></div>
+                                <div class="bg-green-50 p-6 rounded-2xl"><i class="fas fa-headset text-3xl text-green-700 mb-3"></i><h3 class="font-bold" x-text="t.servicesSection.support"></h3></div>
+                                <div class="bg-yellow-50 p-6 rounded-2xl"><i class="fas fa-credit-card text-3xl text-yellow-600 mb-3"></i><h3 class="font-bold" x-text="t.servicesSection.payment"></h3></div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <template x-for="service in getFilteredServices()" :key="service.title">
+                                    <div @click="openOrder(service)" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 cursor-pointer service-card">
+                                        <div class="flex items-center gap-4 mb-4">
+                                            <div class="w-12 h-12 bg-blue-100 text-blue-900 rounded-full flex items-center justify-center text-xl overflow-hidden">
+                                                <template x-if="service.image">
+                                                    <img :src="service.image" class="w-full h-full object-cover">
+                                                </template>
+                                                <template x-if="!service.image">
+                                                    <i class="fas" :class="service.icon"></i>
+                                                </template>
+                                            </div>
+                                            <h3 class="font-bold text-lg" x-text="service.title"></h3>
+                                        </div>
+                                        <p class="text-gray-500 text-sm" x-text="t.servicesSection.orderBtn"></p>
+                                    </div>
+                                </template>
+                            </div>
+                            <template x-if="getFilteredServices().length === 0">
+                                <div class="text-center py-10 text-gray-500 font-bold" x-text="lang === 'fa' ? 'خدمتی یافت نشد.' : (lang === 'ar' ? 'لَمْ يَتِمَّ العُثُورُ عَلَى خِدْمَة.' : 'No services found.')"></div>
+                            </template>
+                        </section>
+                    </template>
+                    
+                    <template x-if="section === 'testimonials'">
+                        <section class="bg-gray-100 py-16">
+                            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                                <h2 class="text-3xl font-bold text-blue-900 mb-2" x-text="t.testimonials.title"></h2>
+                                <p class="text-gray-600 mb-6" x-text="t.testimonials.subtitle"></p>
+                                <button @click="resetReviewForm(); showReviewModal = true" class="mb-10 bg-blue-900 text-white px-6 py-2 rounded-full hover:bg-blue-800 transition-all shadow-md text-sm">
+                                    <i class="fas fa-plus-circle mr-2"></i> <span x-text="t.testimonials.submitBtn"></span>
+                                </button>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                    <template x-for="(review, index) in getCombinedReviews()" :key="index">
+                                        <div class="bg-white p-6 rounded-2xl shadow-md border border-gray-100 flex flex-col justify-between relative">
+                                            <i class="fas fa-quote-right text-4xl text-blue-100 absolute top-4 left-4"></i>
+                                            <p class="text-gray-700 text-sm leading-relaxed mb-6 relative z-10" x-text="review.text"></p>
+                                            <div class="flex items-center justify-between border-t pt-4">
+                                                <div class="text-left">
+                                                    <h4 class="font-bold text-blue-900" x-text="review.name"></h4>
+                                                    <span class="text-xs text-gray-500" x-text="review.role"></span>
+                                                </div>
+                                                <div class="text-yellow-400 text-sm">
+                                                    <template x-for="i in 5"><i class="fas fa-star" :class="i <= review.stars ? 'text-yellow-400' : 'text-gray-300'"></i></template>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </section>
+                    </template>
+                    
+                    <template x-if="section === 'custom_text'">
+                        <section class="max-w-4xl mx-auto px-4 py-12 text-center">
+                            <template x-if="t.customBlocks.services.length > 0">
+                                <div>
+                                    <h2 class="text-2xl font-bold text-blue-900 mb-4" x-text="t.customBlocks.services[0].title"></h2>
+                                    <p class="text-gray-600 text-lg leading-relaxed" x-text="t.customBlocks.services[0].text"></p>
+                                </div>
+                            </template>
+                        </section>
+                    </template>
+
+                    <template x-if="section === 'custom_image'">
+                        <section class="max-w-7xl mx-auto px-4 py-8 text-center">
+                             <template x-if="t.customImages.services.length > 0">
+                                <img :src="t.customImages.services[0].url" class="w-full max-w-4xl mx-auto rounded-2xl shadow-lg">
+                            </template>
+                        </section>
+                    </template>
+                </div>
+            </template>
+        </div>
+
+        <!-- DASHBOARD VIEW -->
+        <section x-show="view === 'dashboard' && currentUser" x-cloak class="max-w-7xl mx-auto px-4 py-12">
+            <h2 class="text-2xl font-bold mb-8 text-blue-900" x-text="t.dashboard.title"></h2>
+            <div class="grid gap-6">
+                <template x-for="order in orders.filter(o => o.userMobile === currentUser.mobile)" :key="order.id">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="font-bold text-lg" x-text="order.service"></h3>
+                                <p class="text-sm text-gray-500 mt-1" x-text="t.dashboard.orderTitle + ' ' + (order.title || '-')"></p>
+                                <p class="text-sm text-gray-500" x-text="t.dashboard.status + ' ' + (order.status === 'Pending' ? t.dashboard.pending : order.status === 'Completed' ? t.dashboard.completed : order.status)"></p>
+                            </div>
+                            <template x-if="order.status === 'Completed'">
+                                <button @click="goToPayment(order)" class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700" x-text="t.dashboard.payBtn"></button>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+                <template x-if="orders.filter(o => o.userMobile === currentUser.mobile).length === 0">
+                    <div class="text-center py-20 text-gray-500" x-text="t.dashboard.noOrders"></div>
+                </template>
+            </div>
+        </section>
+
+        <!-- ADMIN PANEL VIEW -->
+        <section x-show="view === 'admin' && currentUser?.role === 'admin'" x-cloak class="max-w-7xl mx-auto px-4 py-12">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-8 border-b pb-4 gap-4">
+                <h2 class="text-3xl font-bold text-blue-900">پنل مدیریت (ادمین)</h2>
+                <div class="flex flex-wrap gap-2">
+                    <button @click="adminTab = 'orders'" :class="adminTab === 'orders' ? 'bg-blue-900 text-white' : 'bg-gray-200 text-gray-700'" class="px-4 py-2 rounded-lg font-bold transition-all text-sm">سفارش‌ها</button>
+                    <button @click="adminTab = 'reviews'" :class="adminTab === 'reviews' ? 'bg-blue-900 text-white' : 'bg-gray-200 text-gray-700'" class="px-4 py-2 rounded-lg font-bold transition-all text-sm">نظرات</button>
+                    <button @click="adminTab = 'content'" :class="adminTab === 'content' ? 'bg-blue-900 text-white' : 'bg-gray-200 text-gray-700'" class="px-4 py-2 rounded-lg font-bold transition-all text-sm">محتوا</button>
+                    <button @click="adminTab = 'layout'" :class="adminTab === 'layout' ? 'bg-blue-900 text-white' : 'bg-gray-200 text-gray-700'" class="px-4 py-2 rounded-lg font-bold transition-all text-sm">چیدمان و تصاویر</button>
+                    <button @click="adminTab = 'settings'" :class="adminTab === 'settings' ? 'bg-blue-900 text-white' : 'bg-gray-200 text-gray-700'" class="px-4 py-2 rounded-lg font-bold transition-all text-sm">تنظیمات امنیتی</button>
+                </div>
+            </div>
+
+            <!-- Admin Tab: Orders -->
+            <div x-show="adminTab === 'orders'" class="grid gap-6">
+                <template x-for="order in orders" :key="order.id">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="font-bold text-lg" x-text="order.service"></h3>
+                                <p class="text-sm text-gray-500">کاربر: <span x-text="order.mobile"></span></p>
+                            </div>
+                            <div class="text-left">
+                                <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-bold" x-text="order.status"></span>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <select x-model="order.status" class="w-full border rounded p-2 mb-2 text-sm">
+                                <option value="Pending">در انتظار بررسی</option>
+                                <option value="In_Progress">در حال انجام</option>
+                                <option value="Revision">نیاز به اصلاح</option>
+                                <option value="Completed">تکمیل شده</option>
+                            </select>
+                            <input type="number" x-model="order.price" placeholder="مبلغ" class="w-full border rounded p-2 mb-2 text-sm">
+                            <button @click="updateOrderStatus(order.id, order.status, order.price); alert('ذخیره شد')" class="bg-blue-900 text-white w-full py-2 rounded text-sm hover:bg-blue-800">ذخیره</button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Admin Tab: User Reviews -->
+            <div x-show="adminTab === 'reviews'" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h3 class="text-lg font-bold text-blue-900 border-b pb-2 mb-4">نظرات ثبت شده</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <template x-for="(review, index) in userReviews" :key="index">
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 relative">
+                            <button @click="deleteReview(index)" class="absolute top-2 left-2 text-red-500 text-sm">✕</button>
+                            <div class="mb-2"><strong class="text-blue-900" x-text="review.lastName || review.name"></strong></div>
+                            <p class="text-sm text-gray-700 mb-3" x-text="review.text"></p>
+                            <div class="text-xs bg-red-50 text-red-700 px-2 py-1 rounded inline-block">
+                                موبایل: <span class="font-bold font-mono" dir="ltr" x-text="review.mobile"></span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Admin Tab: Content CMS -->
+            <div x-show="adminTab === 'content'" class="space-y-8">
+                
+                <!-- Cloud Sync Section -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-blue-200 mb-6 bg-blue-50/50">
+                    <h3 class="text-lg font-bold text-blue-900 border-b pb-2 mb-4">همگام‌سازی ابری (برای مشاهده تغییرات در دستگاه‌های دیگر)</h3>
+                    <div class="flex flex-col md:flex-row items-center gap-4">
+                        <input type="text" x-model="cloudId" placeholder="کد همگام‌سازی را اینجا وارد کنید..." class="admin-input flex-grow font-mono text-center" dir="ltr">
+                        <button @click="saveToCloud" class="bg-blue-900 text-white px-6 py-2 rounded-lg font-bold text-sm whitespace-nowrap">ذخیره در ابر</button>
+                        <button @click="loadFromCloud" class="bg-green-600 text-white px-6 py-2 rounded-lg font-bold text-sm whitespace-nowrap">بارگذاری از ابر</button>
+                    </div>
+                    <p class="text-xs text-gray-600 mt-2">تغییرات شما به صورت خودکار در ابر ذخیره می‌شود. برای انتقال به گوشی یا لپ‌تاپ دیگر، کد بالا را کپی کرده و در همان فیلد در دستگاه دیگر وارد کنید و دکمه «بارگذاری از ابر» را بزنید.</p>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-blue-900">زبان ویرایش:</span>
+                        <button @click="cmsLang = 'fa'" :class="cmsLang === 'fa' ? 'bg-blue-900 text-white' : 'bg-white text-gray-700'" class="px-3 py-1 rounded border font-bold text-sm shadow-sm">فارسی</button>
+                        <button @click="cmsLang = 'en'" :class="cmsLang === 'en' ? 'bg-blue-900 text-white' : 'bg-white text-gray-700'" class="px-3 py-1 rounded border font-bold text-sm shadow-sm">English</button>
+                        <button @click="cmsLang = 'ar'" :class="cmsLang === 'ar' ? 'bg-blue-900 text-white' : 'bg-white text-gray-700'" class="px-3 py-1 rounded border font-bold text-sm shadow-sm">العربية</button>
+                    </div>
+                    <div class="flex gap-2">
+                        <button @click="resetContent" class="bg-red-100 text-red-700 px-4 py-2 rounded-lg font-bold text-sm hover:bg-red-200">ریست</button>
+                        <button @click="saveContent" class="bg-green-600 text-white px-6 py-2 rounded-lg font-bold text-sm shadow-lg hover:bg-green-700">ذخیره تغییرات</button>
+                    </div>
+                </div>
+
+                <!-- General, Hero, Payment, Footer, FAQ -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="text-lg font-bold text-blue-900 border-b pb-2 mb-4">تنظیمات عمومی، لوگو، تصاویر و فوتر</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        
+                        <!-- LOGO UPLOAD -->
+                        <div class="md:col-span-2 border-b pb-4">
+                            <label class="admin-label text-blue-900">تغییر لوگوی سایت (برای همه زبان‌ها اعمال می‌شود)</label>
+                            <div class="flex items-center gap-4">
+                                <img :src="siteContent.fa.general.logo" class="w-16 h-16 rounded-lg object-cover border bg-gray-50 shadow-sm">
+                                <div class="flex flex-col gap-2 w-full">
+                                    <input type="file" @change="handleImageUpload($event, siteContent.fa.general, 'logo')" accept="image/*" class="text-xs border rounded p-2 bg-gray-50">
+                                    <button @click="removeImage(siteContent.fa.general, 'logo')" class="text-red-500 text-xs text-right hover:underline">حذف لوگو</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- HERO BACKGROUND IMAGE UPLOAD -->
+                        <div class="md:col-span-2 border-b pb-4">
+                            <label class="admin-label text-blue-900">تصویر پس‌زمینه بخش اصلی (Hero Background)</label>
+                            <div class="flex items-center gap-4">
+                                <template x-if="siteContent.fa.hero.bgImage">
+                                    <img :src="siteContent.fa.hero.bgImage" class="w-32 h-20 rounded-lg object-cover border bg-gray-50 shadow-sm">
+                                </template>
+                                <template x-if="!siteContent.fa.hero.bgImage">
+                                    <div class="w-32 h-20 rounded-lg border bg-gray-50 flex items-center justify-center text-xs text-gray-400">بدون عکس</div>
+                                </template>
+                                <div class="flex flex-col gap-2 w-full">
+                                    <input type="file" @change="handleImageUpload($event, siteContent.fa.hero, 'bgImage')" accept="image/*" class="text-xs border rounded p-2 bg-gray-50">
+                                    <button @click="removeImage(siteContent.fa.hero, 'bgImage')" class="text-red-500 text-xs text-right hover:underline">حذف تصویر پس‌زمینه</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- HERO SIDE IMAGE UPLOAD -->
+                        <div class="md:col-span-2 border-b pb-4">
+                            <label class="admin-label text-blue-900">تغییر تصویر داخل کارت (Hero Image)</label>
+                            <div class="flex items-center gap-4">
+                                <template x-if="siteContent[cmsLang].hero.image">
+                                    <img :src="siteContent[cmsLang].hero.image" class="w-32 h-20 rounded-lg object-cover border bg-gray-50 shadow-sm">
+                                </template>
+                                <template x-if="!siteContent[cmsLang].hero.image">
+                                    <div class="w-32 h-20 rounded-lg border bg-gray-50 flex items-center justify-center text-xs text-gray-400">تصویر پیش‌فرض</div>
+                                </template>
+                                <div class="flex flex-col gap-2 w-full">
+                                    <input type="file" @change="handleImageUpload($event, siteContent[cmsLang].hero, 'image')" accept="image/*" class="text-xs border rounded p-2 bg-gray-50">
+                                    <button @click="removeImage(siteContent[cmsLang].hero, 'image')" class="text-red-500 text-xs text-right hover:underline">حذف تصویر</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div><label class="admin-label">عنوان اصلی سایت</label><input type="text" x-model="siteContent[cmsLang].hero.title" class="admin-input"></div>
+                        <div><label class="admin-label">شعار سایت</label><input type="text" x-model="siteContent[cmsLang].hero.subtitle" class="admin-input"></div>
+                        <div class="md:col-span-2"><label class="admin-label">توضیحات اصلی</label><textarea x-model="siteContent[cmsLang].hero.desc" rows="2" class="admin-input"></textarea></div>
+                        
+                        <div><label class="admin-label">شماره کارت</label><input type="text" x-model="siteContent[cmsLang].payment.cardNum" class="admin-input"></div>
+                        <div><label class="admin-label">شماره شبا</label><input type="text" x-model="siteContent[cmsLang].payment.sheba" class="admin-input"></div>
+                        <div class="md:col-span-2"><label class="admin-label">متن درباره ما</label><textarea x-model="siteContent[cmsLang].footer.aboutText" rows="2" class="admin-input"></textarea></div>
+                    </div>
+                    
+                    <div class="mt-6 border-t pt-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="admin-label text-blue-900 mb-0">اطلاعات تماس (فوتر)</label>
+                            <button @click="addContact" class="text-xs bg-blue-100 text-blue-900 px-2 py-1 rounded font-bold">+ افزودن</button>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            <template x-for="(contact, index) in siteContent[cmsLang].footer.contacts" :key="index">
+                                <div class="flex gap-2 items-center bg-gray-50 p-2 rounded border">
+                                    <input type="text" x-model="contact.icon" class="border rounded px-1 py-1 text-xs w-24" placeholder="fa-phone">
+                                    <input type="text" x-model="contact.text" class="border rounded px-2 py-1 text-xs w-full" placeholder="متن">
+                                    <button @click="removeContact(index)" class="text-red-500 text-xs">✕</button>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Services Settings -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <div class="flex justify-between items-center border-b pb-2 mb-4">
+                        <h3 class="text-lg font-bold text-blue-900">مدیریت خدمات</h3>
+                        <button @click="addService" class="bg-blue-100 text-blue-900 px-3 py-1 rounded text-sm font-bold hover:bg-blue-200">+ افزودن خدمت</button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <template x-for="(service, index) in siteContent[cmsLang].services" :key="index">
+                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 relative group flex flex-col gap-3">
+                                <button @click="removeService(index)" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-md opacity-0 group-hover:opacity-100">✕</button>
+                                
+                                <div>
+                                    <label class="text-xs text-gray-500">عنوان خدمت</label>
+                                    <input type="text" x-model="service.title" class="admin-input">
+                                </div>
+                                
+                                <div class="flex gap-4 items-center bg-white p-2 border rounded">
+                                    <div class="w-10 h-10 flex items-center justify-center border rounded overflow-hidden">
+                                        <template x-if="service.image"><img :src="service.image" class="w-full h-full object-cover"></template>
+                                        <template x-if="!service.image"><i class="fas text-gray-600" :class="service.icon"></i></template>
+                                    </div>
+                                    <div class="flex flex-col gap-1 w-full">
+                                        <select x-model="service.icon" class="admin-input text-xs">
+                                            <template x-for="ic in availableIcons"><option :value="ic" x-text="ic"></option></template>
+                                        </select>
+                                        <input type="file" @change="handleImageUpload($event, service, 'image')" accept="image/*" class="text-xs">
+                                        <button @click="removeImage(service, 'image')" class="text-red-500 text-right text-xs">حذف عکس</button>
+                                    </div>
+                                </div>
+
+                                <div class="border-t pt-2">
+                                    <label class="text-xs text-gray-500 block mb-1">فیلدهای فرم سفارش:</label>
+                                    <div class="flex flex-wrap gap-2 text-xs">
+                                        <label class="flex items-center gap-1 bg-white border px-2 py-1 rounded cursor-pointer"><input type="checkbox" :checked="service.fields.includes('mobile')" @change="toggleServiceField(service, 'mobile')"> موبایل</label>
+                                        <label class="flex items-center gap-1 bg-white border px-2 py-1 rounded cursor-pointer"><input type="checkbox" :checked="service.fields.includes('major')" @change="toggleServiceField(service, 'major')"> رشته</label>
+                                        <label class="flex items-center gap-1 bg-white border px-2 py-1 rounded cursor-pointer"><input type="checkbox" :checked="service.fields.includes('university')" @change="toggleServiceField(service, 'university')"> دانشگاه</label>
+                                        <label class="flex items-center gap-1 bg-white border px-2 py-1 rounded cursor-pointer"><input type="checkbox" :checked="service.fields.includes('title')" @change="toggleServiceField(service, 'title')"> عنوان</label>
+                                        <label class="flex items-center gap-1 bg-white border px-2 py-1 rounded cursor-pointer"><input type="checkbox" :checked="service.fields.includes('description')" @change="toggleServiceField(service, 'description')"> توضیحات</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Forms Management -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex justify-between items-center border-b pb-2 mb-4">
+                            <h3 class="text-lg font-bold text-blue-900">فیلدهای ثبت‌نام</h3>
+                            <button @click="addFormField('register')" class="bg-blue-100 text-blue-900 px-2 py-1 rounded text-xs font-bold">+ فیلد جدید</button>
+                        </div>
+                        <div class="space-y-2">
+                            <template x-for="(field, index) in siteContent[cmsLang].registerFields" :key="index">
+                                <div class="flex gap-2 items-center bg-gray-50 p-2 rounded border">
+                                    <input type="text" x-model="field.label" class="admin-input text-xs">
+                                    <select x-model="field.type" class="border rounded px-1 text-xs w-24">
+                                        <option value="text">متن</option>
+                                        <option value="password">پسورد</option>
+                                        <option value="province_city">استان/شهر</option>
+                                    </select>
+                                    <button @click="removeFormField('register', index)" class="text-red-500 text-xs">✕</button>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex justify-between items-center border-b pb-2 mb-4">
+                            <h3 class="text-lg font-bold text-blue-900">فیلدهای ثبت نظر</h3>
+                            <button @click="addFormField('review')" class="bg-blue-100 text-blue-900 px-2 py-1 rounded text-xs font-bold">+ فیلد جدید</button>
+                        </div>
+                        <div class="space-y-2">
+                            <template x-for="(field, index) in siteContent[cmsLang].testimonials.fields" :key="index">
+                                <div class="flex gap-2 items-center bg-gray-50 p-2 rounded border">
+                                    <input type="text" x-model="field.label" class="admin-input text-xs">
+                                    <button @click="removeFormField('review', index)" class="text-red-500 text-xs">✕</button>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Management -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="text-lg font-bold text-blue-900 border-b pb-2 mb-4">مدیریت فوتر (دسته‌بندی‌ها و تماس)</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="admin-label text-blue-900 mb-0">دسته‌بندی خدمات (لینک‌ها)</label>
+                                <button @click="addCategory" class="text-xs bg-blue-100 text-blue-900 px-2 py-1 rounded font-bold">+ افزودن</button>
+                            </div>
+                            <template x-for="(cat, index) in siteContent[cmsLang].footer.categories" :key="index">
+                                <div class="flex gap-2 mb-2 items-center bg-gray-50 p-2 rounded border">
+                                    <input type="text" x-model="cat.title" placeholder="عنوان" class="admin-input text-xs">
+                                    <select x-model="cat.linkTo" class="admin-input text-xs w-32">
+                                        <option value="">لینک به...</option>
+                                        <template x-for="srv in siteContent[cmsLang].services">
+                                            <option :value="srv.title" x-text="srv.title"></option>
+                                        </template>
+                                    </select>
+                                    <button @click="removeCategory(index)" class="text-red-500 text-xs">✕</button>
+                                </div>
+                            </template>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="admin-label text-blue-900 mb-0">اطلاعات تماس (با آیکون/عکس)</label>
+                                <button @click="addContact" class="text-xs bg-blue-100 text-blue-900 px-2 py-1 rounded font-bold">+ افزودن</button>
+                            </div>
+                            <div class="max-h-60 overflow-y-auto pr-2">
+                                <template x-for="(contact, index) in siteContent[cmsLang].footer.contacts" :key="index">
+                                    <div class="bg-gray-50 p-2 rounded border mb-2 flex flex-col gap-1 relative group">
+                                        <button @click="removeContact(index)" class="absolute top-1 left-1 text-red-500 text-xs opacity-0 group-hover:opacity-100">✕</button>
+                                        <input type="text" x-model="contact.text" placeholder="متن" class="admin-input text-xs">
+                                        <div class="flex gap-2">
+                                            <select x-model="contact.icon" class="admin-input text-xs">
+                                                <template x-for="ic in availableIcons"><option :value="ic" x-text="ic"></option></template>
+                                            </select>
+                                            <input type="file" @change="handleImageUpload($event, contact, 'image')" accept="image/*" class="text-xs w-24">
+                                            <button @click="removeImage(contact, 'image')" class="text-red-500 text-xs">حذف عکس</button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center pt-4 pb-12">
+                    <button @click="saveContent" class="bg-green-600 text-white px-12 py-4 rounded-full font-bold text-lg shadow-xl hover:bg-green-700 transition-transform transform hover:scale-105">ذخیره نهایی</button>
+                </div>
+            </div>
+
+            <!-- Admin Tab: Layout -->
+            <div x-show="adminTab === 'layout'" class="space-y-8">
+                <div class="bg-blue-50 border border-blue-200 p-4 rounded-xl flex justify-between items-center">
+                    <span class="font-bold text-blue-900">مدیریت چیدمان و بلوک‌های تصویری/متنی</span>
+                    <button @click="saveContent" class="bg-green-600 text-white px-6 py-2 rounded-lg font-bold text-sm shadow-lg">ذخیره</button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border">
+                        <h3 class="font-bold text-blue-900 mb-4">چیدمان صفحه اصلی</h3>
+                        <div class="flex gap-2 mb-4">
+                            <select x-model="newBlockType" class="border rounded p-2 text-sm w-full">
+                                <option value="text_home">بلوک متنی</option>
+                                <option value="image_home">بلوک تصویری</option>
+                            </select>
+                            <button @click="addLayoutSection('home')" class="bg-blue-900 text-white px-4 py-2 rounded text-sm font-bold">افزودن</button>
+                        </div>
+                        <div class="space-y-2">
+                            <template x-for="(section, index) in siteContent[cmsLang].layout.home" :key="index">
+                                <div class="flex justify-between items-center bg-gray-50 p-2 border rounded">
+                                    <span class="text-sm font-bold" x-text="section === 'hero' ? 'بخش اصلی' : (section === 'services_preview' ? 'خدمات' : (section === 'testimonials' ? 'نظرات' : 'بلوک اضافی'))"></span>
+                                    <div class="flex gap-1">
+                                        <button @click="moveSection('home', index, 'up')" class="border px-2 rounded bg-white"><i class="fas fa-arrow-up text-xs"></i></button>
+                                        <button @click="moveSection('home', index, 'down')" class="border px-2 rounded bg-white"><i class="fas fa-arrow-down text-xs"></i></button>
+                                        <button @click="removeLayoutSection('home', index)" class="border px-2 rounded bg-red-100 text-red-600"><i class="fas fa-trash text-xs"></i></button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow-sm border">
+                        <h3 class="font-bold text-blue-900 mb-4">چیدمان صفحه خدمات</h3>
+                        <div class="flex gap-2 mb-4">
+                            <select x-model="newBlockType" class="border rounded p-2 text-sm w-full">
+                                <option value="text_services">بلوک متنی</option>
+                                <option value="image_services">بلوک تصویری</option>
+                            </select>
+                            <button @click="addLayoutSection('services')" class="bg-blue-900 text-white px-4 py-2 rounded text-sm font-bold">افزودن</button>
+                        </div>
+                        <div class="space-y-2">
+                            <template x-for="(section, index) in siteContent[cmsLang].layout.services" :key="index">
+                                <div class="flex justify-between items-center bg-gray-50 p-2 border rounded">
+                                    <span class="text-sm font-bold" x-text="section === 'services_list' ? 'لیست خدمات' : (section === 'testimonials' ? 'نظرات' : 'بلوک اضافی')"></span>
+                                    <div class="flex gap-1">
+                                        <button @click="moveSection('services', index, 'up')" class="border px-2 rounded bg-white"><i class="fas fa-arrow-up text-xs"></i></button>
+                                        <button @click="moveSection('services', index, 'down')" class="border px-2 rounded bg-white"><i class="fas fa-arrow-down text-xs"></i></button>
+                                        <button @click="removeLayoutSection('services', index)" class="border px-2 rounded bg-red-100 text-red-600"><i class="fas fa-trash text-xs"></i></button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Tab: Security Settings -->
+            <div x-show="adminTab === 'settings'" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 max-w-lg mx-auto">
+                <h3 class="text-lg font-bold text-blue-900 border-b pb-2 mb-4">تغییر نام کاربری و رمز عبور ادمین</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="admin-label">نام کاربری جدید (شماره موبایل)</label>
+                        <input type="text" x-model="newAdminMobile" :placeholder="adminCredentials.mobile" class="admin-input" dir="ltr">
+                    </div>
+                    <div>
+                        <label class="admin-label">رمز عبور جدید</label>
+                        <input type="password" x-model="newAdminPassword" placeholder="••••••" class="admin-input" dir="ltr">
+                    </div>
+                    <button @click="updateAdminCreds" class="w-full bg-blue-900 text-white py-3 rounded-full hover:bg-blue-800 font-bold">ذخیره اطلاعات ورود</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- PAYMENT VIEW -->
+        <section x-show="view === 'payment'" x-cloak class="max-w-3xl mx-auto px-4 py-12">
+            <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
+                <h2 class="text-2xl font-bold mb-6 text-blue-900" x-text="t.payment.title"></h2>
+                <div class="bg-blue-50 p-6 rounded-xl mb-6">
+                    <p class="text-3xl font-bold text-blue-900"><span x-text="paymentOrder?.price?.toLocaleString()"></span> <span x-text="lang === 'fa' ? 'تومان' : (lang === 'ar' ? 'ريال' : 'Tomans')"></span></p>
+                </div>
+                <div class="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg text-sm leading-relaxed mb-8">
+                    <span x-text="t.payment.warning"></span>
+                </div>
+                <button @click="confirmPayment" class="w-full bg-blue-900 text-white py-3 rounded-full font-bold" x-text="t.payment.confirmBtn"></button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-blue-950 text-white py-12 mt-20" id="contact">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+                <h3 class="text-lg font-bold mb-4" x-text="t.footer.catTitle"></h3>
+                <ul class="space-y-2 text-sm text-blue-200">
+                    <template x-for="cat in t.footer.categories" :key="cat.title">
+                        <li><a href="#" @click.prevent="cat.linkTo ? openOrder(cat.linkTo) : null" class="hover:text-white transition-colors" x-text="cat.title"></a></li>
+                    </template>
+                </ul>
+            </div>
+            
+            <div>
+                <h3 class="text-lg font-bold mb-4" x-text="t.footer.guideTitle"></h3>
+                <ul class="space-y-2 text-sm text-blue-200">
+                    <template x-for="(g, idx) in t.guide" :key="idx">
+                        <li><a href="#" @click.prevent="openGuide(idx)" class="hover:text-white transition-colors" x-text="g.title"></a></li>
+                    </template>
+                </ul>
+            </div>
+            
+            <div>
+                <h3 class="text-lg font-bold mb-4" x-text="t.footer.contactTitle"></h3>
+                <ul class="space-y-2 text-sm text-blue-200">
+                    <template x-for="(contact, idx) in t.footer.contacts" :key="idx">
+                        <li :dir="contact.ltr ? 'ltr' : 'rtl'" :class="contact.ltr ? 'text-right md:text-left' : 'text-right'" class="flex items-center gap-2">
+                            <template x-if="contact.image">
+                                <img :src="contact.image" class="w-5 h-5 object-contain">
+                            </template>
+                            <template x-if="!contact.image">
+                                <i class="fas" :class="contact.icon"></i>
+                            </template>
+                            <span x-text="contact.text"></span>
+                        </li>
+                    </template>
+                </ul>
+            </div>
+            
+            <div id="about">
+                <h3 class="text-lg font-bold mb-4" x-text="t.footer.aboutTitle"></h3>
+                <p class="text-sm text-blue-200 leading-relaxed" x-text="t.footer.aboutText"></p>
+            </div>
+        </div>
+        <div class="text-center text-sm text-blue-400 mt-12 border-t border-blue-900 pt-6">
+            <span x-text="t.footer.copyright"></span>
+        </div>
+    </footer>
+
+    <!-- MODALS -->
+
+    <!-- Login/Register Modal -->
+    <div x-show="showLogin" x-cloak class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl relative max-h-[90vh] overflow-y-auto" @click.away="showLogin = false">
+            <button @click="showLogin = false" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700"><i class="fas fa-times"></i></button>
+            <h2 class="text-2xl font-bold text-center mb-6 text-blue-900" x-text="isRegister ? t.auth.regTitle : t.auth.loginTitle"></h2>
+            
+            <form x-show="!isRegister" @submit.prevent="login" class="space-y-4">
+                <div><label class="block text-sm font-medium mb-1" x-text="t.auth.mobile"></label><input type="text" x-model="loginForm.mobile" required class="w-full border border-gray-300 rounded-lg px-4 py-2 outline-none"></div>
+                <div><label class="block text-sm font-medium mb-1" x-text="t.auth.password"></label><input type="password" x-model="loginForm.password" required class="w-full border border-gray-300 rounded-lg px-4 py-2 outline-none"></div>
+                
+                <div class="flex items-center gap-2 text-sm text-gray-600 py-2">
+                    <input type="checkbox" x-model="loginForm.isNotRobot" class="w-4 h-4"> 
+                    <span x-text="t.auth.notRobot"></span>
+                </div>
+                
+                <button type="submit" :disabled="!loginForm.isNotRobot" :class="!loginForm.isNotRobot ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-800'" class="w-full bg-blue-900 text-white py-3 rounded-full font-bold" x-text="t.auth.loginBtn"></button>
+                <p class="text-center mt-4 text-sm text-gray-600"><span x-text="t.auth.noAcc"></span> <button type="button" @click="isRegister = true" class="text-blue-600 font-bold" x-text="t.auth.regBtn"></button></p>
+            </form>
+
+            <!-- Dynamic Register Form -->
+            <form x-show="isRegister" @submit.prevent="register" class="space-y-3">
+                <template x-for="field in t.registerFields" :key="field.id">
+                    <div x-show="field.type !== 'province_city'">
+                        <label class="block text-xs mb-1" x-text="field.label"></label>
+                        <input :type="field.type" x-model="registerForm[field.id]" :required="field.required" class="w-full border border-gray-300 rounded-lg px-4 py-2 outline-none">
+                    </div>
+                </template>
+
+                <!-- Province / City Logic -->
+                <template x-for="field in t.registerFields" :key="field.id + '_loc'">
+                    <div x-show="field.type === 'province_city'" class="space-y-2">
+                        <label class="block text-xs mb-1" x-text="field.label"></label>
+                        <select x-model="selectedProvince" @change="updateCities()" class="w-full border rounded-lg px-4 py-2 outline-none">
+                            <option value="" x-text="t.auth.province + '...'"></option>
+                            <template x-for="prov in provincesList"><option :value="prov" x-text="prov"></option></template>
+                        </select>
+                        <select x-model="registerForm['city']" :disabled="!selectedProvince" class="w-full border rounded-lg px-4 py-2 outline-none disabled:opacity-50">
+                            <option value="" x-text="t.auth.city + '...'"></option>
+                            <template x-for="city in citiesList"><option :value="city" x-text="city"></option></template>
+                        </select>
+                    </div>
+                </template>
+
+                <button type="submit" class="w-full bg-blue-900 text-white py-3 rounded-full hover:bg-blue-800 font-bold mt-2" x-text="t.auth.regBtn"></button>
+                <p class="text-center mt-2 text-sm text-gray-600"><span x-text="t.auth.haveAcc"></span> <button type="button" @click="isRegister = false" class="text-blue-600 font-bold" x-text="t.auth.loginNow"></button></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Dynamic Review Modal -->
+    <div x-show="showReviewModal" x-cloak class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl relative" @click.away="showReviewModal = false">
+            <button @click="showReviewModal = false" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700"><i class="fas fa-times"></i></button>
+            <h2 class="text-xl font-bold text-center mb-6 text-blue-900" x-text="t.testimonials.formTitle"></h2>
+            <form @submit.prevent="submitReview" class="space-y-4 text-sm">
+                <template x-for="field in t.testimonials.fields" :key="field.id">
+                    <div>
+                        <label class="block mb-1 font-bold" x-text="field.label"></label>
+                        <template x-if="field.type === 'textarea'">
+                            <textarea x-model="reviewForm[field.id]" :required="field.required" rows="3" class="w-full border rounded-lg px-3 py-2 outline-none"></textarea>
+                        </template>
+                        <template x-if="field.type !== 'textarea'">
+                            <input :type="field.type" x-model="reviewForm[field.id]" :required="field.required" class="w-full border rounded-lg px-3 py-2 outline-none">
+                        </template>
+                    </div>
+                </template>
+                <div class="flex gap-2 pt-2">
+                    <button type="submit" class="w-full bg-blue-900 text-white py-3 rounded-full font-bold" x-text="t.testimonials.formSubmit"></button>
+                    <button type="button" @click="showReviewModal = false" class="w-full bg-gray-200 text-gray-700 py-3 rounded-full font-bold" x-text="t.testimonials.formCancel"></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- FAQ Modal -->
+    <div x-show="showFAQ" x-cloak class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
+        <div class="bg-white rounded-2xl p-8 w-full max-w-3xl shadow-2xl max-h-[90vh] overflow-y-auto" @click.away="showFAQ = false">
+            <div class="flex justify-between items-center mb-6 border-b pb-4">
+                <h2 class="text-2xl font-bold text-blue-900" x-text="t.nav.faq"></h2>
+                <button @click="showFAQ = false"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="space-y-3">
+                <template x-for="(item, index) in t.faq" :key="index">
+                    <div class="border border-gray-200 rounded-lg">
+                        <button @click="toggleFaq(index)" class="w-full text-right bg-gray-50 px-4 py-3 font-bold text-blue-900 flex justify-between">
+                            <span x-text="(index+1) + '. ' + item.q"></span>
+                            <i class="fas fa-chevron-down" :class="activeFaq === index ? 'rotate-180' : ''"></i>
+                        </button>
+                        <div x-show="activeFaq === index" class="px-4 py-3 text-sm text-gray-600 border-t"><p x-text="item.a"></p></div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <!-- Service Guide Modal -->
+    <div x-show="showGuide" x-cloak class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
+        <div class="bg-white rounded-2xl p-8 w-full max-w-3xl shadow-2xl" @click.away="showGuide = false">
+            <div class="flex justify-between items-center mb-6 border-b pb-4">
+                <h2 class="text-2xl font-bold text-blue-900" x-text="t.footer.guideTitle"></h2>
+                <button @click="showGuide = false"><i class="fas fa-times"></i></button>
+            </div>
+            <div x-show="activeGuide !== null">
+                <h4 class="font-bold text-xl mb-3 text-blue-900" x-text="t.guide[activeGuide].title"></h4>
+                <p x-text="t.guide[activeGuide].text"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Modal -->
+    <div x-show="showOrderModal" x-cloak class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4">
+        <div class="bg-white rounded-2xl p-8 w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h3 class="text-xl font-bold mb-6 text-blue-900" x-text="orderForm.service"></h3>
+            <form @submit.prevent="submitOrder" class="space-y-4 text-sm">
+                <div x-show="orderForm.activeFields.includes('mobile')"><label class="block mb-1" x-text="t.orderForm.mobile"></label><input type="text" x-model="orderForm.mobile" required class="w-full border rounded-lg px-3 py-2"></div>
+                <div x-show="orderForm.activeFields.includes('major')"><label class="block mb-1" x-text="t.orderForm.major"></label><input type="text" x-model="orderForm.major" required class="w-full border rounded-lg px-3 py-2"></div>
+                <div x-show="orderForm.activeFields.includes('university')"><label class="block mb-1" x-text="t.orderForm.university"></label><input type="text" x-model="orderForm.university" required class="w-full border rounded-lg px-3 py-2"></div>
+                <div x-show="orderForm.activeFields.includes('title')"><label class="block mb-1" x-text="t.orderForm.title"></label><input type="text" x-model="orderForm.title" required class="w-full border rounded-lg px-3 py-2"></div>
+                <div x-show="orderForm.activeFields.includes('description')"><label class="block mb-1" x-text="t.orderForm.desc"></label><textarea x-model="orderForm.description" rows="3" class="w-full border rounded-lg px-3 py-2"></textarea></div>
+                <div x-show="orderForm.activeFields.includes('file')"><label class="block mb-1" x-text="t.orderForm.file"></label><input type="file" @change="orderForm.file = $event.target.files[0]" class="w-full border rounded-lg px-3 py-2"></div>
+                <div class="flex gap-2 pt-2">
+                    <button type="submit" class="w-full bg-blue-900 text-white py-3 rounded-full font-bold" x-text="t.orderForm.submit"></button>
+                    <button type="button" @click="showOrderModal = false" class="w-full bg-gray-200 text-gray-700 py-3 rounded-full font-bold" x-text="t.orderForm.cancel"></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</body>
+</html>
